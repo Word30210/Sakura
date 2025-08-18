@@ -1,0 +1,10 @@
+{
+    "languageMode": "strict",
+    "lint": { "LocalShadow": false, "LocalUnused": false, "FunctionUnused": false, "ImportUnused": false },
+    "lintErrors": true,
+    "globals": [
+        "describe",
+        "it",
+        "expect"
+    ]
+}
