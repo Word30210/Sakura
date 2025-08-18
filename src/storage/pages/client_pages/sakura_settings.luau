@@ -49,9 +49,9 @@ end
 
 function page.uninitialize()
 	for scope, page in pages do
-		page.Remover(scope)
+		page.Remover(scope :: Scope)
 		
-		pages[scope] = nil
+		pages[scope :: Scope] = nil
 	end
 end
 
