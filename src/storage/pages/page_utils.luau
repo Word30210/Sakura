@@ -2,15 +2,12 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --#[ Head Variables ]#--
-local page = {}
-local path = "sakura::settings"
+local module = {}
 
 local SakuraStorage = ReplicatedStorage.sakura_storage
 
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
-
-local PageUtils = require(script.Parent.Parent.page_utils)
 
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
@@ -24,8 +21,6 @@ local OnChange = Fusion.OnChange
 local globals = require(SakuraStorage.globals)
 local scopes = globals.scopes
 
-local pages: { [Scope]: Page } = {}
-
 --#[ Functions ]#--
 --
 
@@ -37,35 +32,24 @@ type Scope<T = Fusion> = Fusion.Scope<T>
 type Page<T=any> = globals.Page<T>
 
 --#[ Main ]#--
-function page.initialize()
-	PageUtils.initializePage(path)
+function module.initializePage(
+    path: string
+)
+    if scopes[path] then
+        scopes[path]:doCleanup()
+    end
+
+    scopes[path] = globals.rootScope:innerScope(Fusion)
 end
 
-function page.uninitialize()
-	PageUtils.uninitializePage(pages)
+function module.uninitializePage(
+    pages: { [Scope]: Page }
+)
+    for scope, page in pages do
+        page.Remover(scope :: Scope)
+
+        pages[scope :: Scope] = nil
+    end
 end
 
-function page.new<S>(
-	scope: Fusion.Scope<typeof(Fusion) & S>,
-	params: any
-): Page<S>
-	local scope = scope:innerScope(Fusion)
-	
-	local page: Page<S> = {
-		Path = path;
-		Icon = scope:Value("rbxassetid://135586789898242");
-		Content = scope:New "Frame" {
-			Size = UDim2.fromScale(1, 1);
-
-			BackgroundColor3 = Color3.new(1, 0, 0);
-		}
-	}
-	
-	pages[scope] = page
-	
-	return page
-end
-
-page.path = path
-
-return page
+return module

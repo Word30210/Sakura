@@ -31,14 +31,7 @@ export type Page<S=any> = {
 	Path: string;
 	Title: UsedAs<string>?;
 	Icon: UsedAs<string>?;
-
-	Renderer: (
-		scope: Fusion.Scope<typeof(Fusion) & S>
-	) -> any;
-
-	Remover: (
-		scope: Fusion.Scope<typeof(Fusion) & S>
-	) -> ();
+	Content: Fusion.Child;
 }
 
 --#[ Main ]#--
