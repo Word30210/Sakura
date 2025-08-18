@@ -1,11 +1,9 @@
---!strict
-
 --#[ Services ]#--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --#[ Head Variables ]#--
 local page = {}
-local path = script.Name
+local path = "sakura::settings"
 
 local SakuraStorage = ReplicatedStorage.sakura_storage
 
@@ -86,5 +84,7 @@ function page.new<S>(
 	
 	return page
 end
+
+page.path = path
 
 return page

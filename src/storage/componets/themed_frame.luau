@@ -1,5 +1,3 @@
---!strict
-
 --#[ Services ]#--
 local Player = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -76,7 +74,6 @@ return function(
 			return use(props.BackgroundColor3) or use(globals.theme).primaryBackgroundColor
 		end);
 		BackgroundTransparency = props.BackgroundTransparency;
-		CornerRadius = props.CornerRadius;
 
 		AutomaticSize = props.AutomaticSize;
 		SizeConstraint = props.SizeConstraint;
