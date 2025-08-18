@@ -1,0 +1,10 @@
+[package]
+name = "word/sakura"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
+bytenet = "ffrostflame/bytenet@0.4.6"
+fusion = "elttob/fusion@0.3.0"
+t = "osyrisrblx/t@3.1.1"
