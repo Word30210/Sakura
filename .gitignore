@@ -1,6 +1,13 @@
-# Project place file
-/Sakura.rbxlx
+# Roblox Studio files
+*.rbxl
+*.rbxlx
 
-# Roblox Studio lock files
-/*.rbxlx.lock
-/*.rbxl.lock
+# lock files
+*.lock
+
+# wally packages
+/Packages
+
+# rojo files
+aftman.toml
+sourcemap.json
