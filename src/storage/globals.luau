@@ -73,4 +73,24 @@ function globals.functions.addNumberToColor3BasedRGB(
 	return Color3.fromRGB(r + number, g + number, b + number)
 end
 
+function globals.functions.toOrdinal(
+	number: number
+): string
+	local suffix = "th"
+	local lastTwo = number % 100
+	local lastOne = number % 10
+
+	if lastTwo < 11 or lastTwo > 13 then
+		if lastOne == 1 then
+			suffix = "st"
+		elseif lastOne == 2 then
+			suffix = "nd"
+		elseif lastOne == 3 then
+			suffix = "rd"
+		end
+	end
+
+	return `{ number }{ suffix }`
+end
+
 return globals
