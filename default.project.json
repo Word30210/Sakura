@@ -24,6 +24,9 @@
       "StarterPlayerScripts": {
         "client": {
           "$path": "src/client"
+        },
+        "test": {
+          "$path": "test"
         }
       }
     }
