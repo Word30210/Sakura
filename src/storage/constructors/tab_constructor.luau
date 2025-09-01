@@ -7,6 +7,8 @@ local sakuraStorage = ReplicatedStorage.sakura_storage
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
 
+local TabModules = require(sakuraStorage.modules.tab_module)
+
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
 local peek = Fusion.peek
@@ -26,6 +28,10 @@ type TabImpl = {
     ) -> Tab;
 
     Destroy: (
+        self: Tab
+    ) -> ();
+
+    DestroyAndRemoveFromTabs: (
         self: Tab
     ) -> ();
 }
@@ -68,9 +74,7 @@ function tabImpl.new(
     return setmetatable(self, tabImpl)
 end
 
-function tabImpl.Destroy(
-    self: Tab
-): ()
+function tabImpl:Destroy()
     local self = self :: any
 
     setmetatable(self, nil)
@@ -78,6 +82,20 @@ function tabImpl.Destroy(
     for key, value in self do
         self[key] = nil
     end
+end
+
+function tabImpl:DestroyAndRemoveFromTabs()
+    TabModules.removeTab(self)
+
+    local self = self :: any
+
+    setmetatable(self, nil)
+
+    for key, value in self do
+        self[key] = nil
+    end
+
+
 end
 
 return tabImpl

@@ -184,7 +184,7 @@ return function(
 		)
 			local peekedDraggingTab = peek(globals.draggingTab)
 			
-			if peekedDraggingTab ~= peek(props.Tab) then
+			if peekedDraggingTab and peekedDraggingTab ~= peek(props.Tab) then
 				return
 			end
 			
@@ -257,7 +257,7 @@ return function(
 		)
 			local peekedDraggingTab = peek(globals.draggingTab)
 
-			if peekedDraggingTab ~= peek(props.Tab) then
+			if peekedDraggingTab and peekedDraggingTab ~= peek(props.Tab) then
 				return
 			end
 			
@@ -271,7 +271,7 @@ return function(
 				
 				local peekedDraggingTab = peek(globals.draggingTab)
 				
-				if peekedDraggingTab ~= peekedTab then
+				if peekedDraggingTab and peekedDraggingTab == peekedTab then
 					globals.draggingTab:set(nil)
 					zIndexValue:set(1)
 					
@@ -497,7 +497,7 @@ return function(
 				)
 					local peekedDraggingTab = peek(globals.draggingTab)
 					
-					if peekedDraggingTab ~= peek(props.Tab) then
+					if peekedDraggingTab and peekedDraggingTab ~= peek(props.Tab) then
 						return
 					end
 					
@@ -513,7 +513,7 @@ return function(
 				)
 					local peekedDraggingTab = peek(globals.draggingTab)
 					
-					if peekedDraggingTab ~= peek(props.Tab) then
+					if peekedDraggingTab and peekedDraggingTab ~= peek(props.Tab) then
 						return
 					end
 					

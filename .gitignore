@@ -13,4 +13,7 @@ aftman.toml
 sourcemap.json
 
 # test files
-/test
+/test/*
+!/test/*.shared.client.luau
+!/test/*.shared.server.luau
+!/test/*.shared.luau
