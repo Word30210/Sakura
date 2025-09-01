@@ -9,8 +9,12 @@ local mouse = localPlayer:GetMouse()
 
 local SakuraStorage = ReplicatedStorage.sakura_storage
 
+local globals = require(SakuraStorage.globals)
+
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
+
+local TabModule = require(SakuraStorage.modules.tab_module)
 
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
@@ -35,15 +39,12 @@ export type props = {
 	Name: UsedAs<string>?;
 	Parent: UsedAs<Instance>?;
 	
-	Path: Value<string>;
+	Tab: globals.Tab;
 	Position: Value<PositionData>;
-	Content: UsedAs<string>?;
-	
-	IsControlButton: UsedAs<boolean>?;
 }
 
 --#[ Variables ]#--
-local globals = require(SakuraStorage.globals)
+--
 
 --#[ Function ]#--
 --
@@ -69,10 +70,10 @@ return function(
 	local zIndexValue = scope:Value(1)
 
 	local currentTabObserver = scope:Observer(currentTab):onBind(function()
-		local peekedPath = peek(props.Path)
+		local peekedTab = peek(props.Tab)
 		local peekedCurrnetTab = peek(currentTab)
 
-		if peekedCurrnetTab == peekedPath then
+		if peekedCurrnetTab == peekedTab then
 			isSelected:set(true)
 		else
 			isSelected:set(false)
@@ -84,8 +85,6 @@ return function(
 	local tabButtonColorRest = scope:Computed(function(
 		use: Fusion.Use
 	)
-		local a = use(globals.theme)
-		
 		return use(globals.theme).primaryBackgroundColor
 	end)
 	
@@ -185,7 +184,7 @@ return function(
 		)
 			local peekedDraggingTab = peek(globals.draggingTab)
 			
-			if peekedDraggingTab and peekedDraggingTab ~= peek(props.Path) then
+			if peekedDraggingTab ~= peek(props.Tab) then
 				return
 			end
 			
@@ -194,17 +193,16 @@ return function(
 			elseif inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
 				isHeldDown:set(true)
 				
-				local peekedPath = peek(props.Path)
+				local peekedTab = peek(props.Tab)
 				local peekedPositionData: PositionData = peek(props.Position)
 				local peekedPosition: number = peek(peekedPositionData.Position)
 				local peekedTabs = peek(globals.tabs)
 				local peekedCurrentTab = peek(globals.currentTab)
 
-				globals.currentTab:set(peekedPath)
-				globals.currentTabIndex:set(assert(table.find(peekedTabs, peekedPath)))
+				TabModule.setCurrentTab(peekedTab)
 				
 				if not peek(globals.draggingTab) then
-					globals.draggingTab:set(peekedPath)
+					globals.draggingTab:set(peekedTab)
 
 					local draggingStartPositionY = peekedPosition
 					local draggingStartMouseY = mouse.Y
@@ -241,11 +239,11 @@ return function(
 							SpringSpeed = 1000;
 						}
 						
-						local foundIndex = table.find(peekedTabs, peekedPath)
+						local foundIndex = table.find(peekedTabs, peekedTab)
 						
 						if foundIndex and foundIndex ~= index then
 							peekedTabs[foundIndex] = peekedTabs[index]
-							peekedTabs[index] = peekedPath
+							peekedTabs[index] = peekedTab
 							
 							globals.tabs:set(peekedTabs)
 						end
@@ -259,7 +257,7 @@ return function(
 		)
 			local peekedDraggingTab = peek(globals.draggingTab)
 
-			if peekedDraggingTab and peekedDraggingTab ~= peek(props.Path) then
+			if peekedDraggingTab ~= peek(props.Tab) then
 				return
 			end
 			
@@ -268,12 +266,12 @@ return function(
 			elseif inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
 				isHeldDown:set(false)
 				
-				local peekedPath = peek(props.Path)
+				local peekedTab = peek(props.Tab)
 				local peekedTabs = peek(globals.tabs)
 				
 				local peekedDraggingTab = peek(globals.draggingTab)
 				
-				if peekedDraggingTab and peekedDraggingTab == peekedPath then
+				if peekedDraggingTab ~= peekedTab then
 					globals.draggingTab:set(nil)
 					zIndexValue:set(1)
 					
@@ -283,7 +281,7 @@ return function(
 						draggingConnection = nil
 					end
 					
-					local foundIndex = table.find(peekedTabs, peekedPath)
+					local foundIndex = table.find(peekedTabs, peekedTab)
 					
 					if foundIndex then
 						props.Position:set {
@@ -295,7 +293,7 @@ return function(
 			end
 		end;
 		
-		Name = props.Name or props.Path;
+		Name = props.Name or props.Tab.url;
 		Parent = props.Parent;
 		
 		AnchorPoint = Vector2.new(0.5, 0.5);
@@ -405,7 +403,9 @@ return function(
 				Text = scope:Computed(function(
 					use: Fusion.Use
 				)
-					return use(props.Content) or use(props.Path)
+					local tab = props.Tab
+
+					return use(tab.title) or use(tab.url)
 				end);
 				TextColor3 = scope:Spring(
 					scope:Computed(function(
@@ -497,7 +497,7 @@ return function(
 				)
 					local peekedDraggingTab = peek(globals.draggingTab)
 					
-					if peekedDraggingTab and peekedDraggingTab ~= peek(props.Path) then
+					if peekedDraggingTab ~= peek(props.Tab) then
 						return
 					end
 					
@@ -513,7 +513,7 @@ return function(
 				)
 					local peekedDraggingTab = peek(globals.draggingTab)
 					
-					if peekedDraggingTab and peekedDraggingTab ~= peek(props.Path) then
+					if peekedDraggingTab ~= peek(props.Tab) then
 						return
 					end
 					
@@ -526,9 +526,9 @@ return function(
 				end;
 
 				[OnEvent "MouseButton1Click"] = function()
-					local peekedPath = peek(props.Path)
+					local peekedTab = peek(props.Tab)
 					local peekedTabs = peek(tabs)
-					local index = table.find(peekedTabs, peekedPath)
+					local index = table.find(peekedTabs, peekedTab)
 					
 					if index then
 						table.remove(peekedTabs, index)

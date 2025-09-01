@@ -6,8 +6,13 @@ local module = {}
 
 local SakuraStorage = ReplicatedStorage.sakura_storage
 
+local globals = require(SakuraStorage.globals)
+
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
+
+--#[ Constructors ]#--
+local TabConstructor = require(SakuraStorage.constructors.tab_constructor)
 
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
@@ -15,10 +20,10 @@ local peek = Fusion.peek
 local scoped = Fusion.scoped
 
 --#[ Variables ]#--
-local globals = require(SakuraStorage.globals)
+--
 
 --#[ Main ]#--
-function module.getTabs(): Fusion.Value<{ string }>
+function module.getTabs(): Fusion.Value<{ TabConstructor.Tab }>
 	return globals.tabs
 end
 
@@ -26,7 +31,7 @@ function module.getLength(): number
 	return #globals.tabs
 end
 
-function module.getCurrentTab(): string?
+function module.getCurrentTab(): TabConstructor.Tab?
 	return peek(globals.currentTab)
 end
 
@@ -34,44 +39,72 @@ function module.getCurrentTabIndex(): number
 	return peek(globals.currentTabIndex)
 end
 
+function module.setCurrentTab(
+	tab: TabConstructor.Tab
+)
+	globals.currentTab:set(tab)
+	globals.currentTabIndex:set(
+		assert(
+			table.find(
+				peek(globals.tabs),
+				tab
+			)
+		)
+	)
+end
+
+function module.findTabByURL(
+	url: string
+): TabConstructor.Tab?
+	local tabs = peek(globals.tabs)
+
+	for _, tab in tabs do
+		if tab.url == url then
+			return tab :: TabConstructor.Tab
+		end
+	end
+
+	return nil
+end
+
 function module.addTabFront(
-	path: string
-): ()
+	tab: TabConstructor.Tab
+)
 	local tabs = peek(globals.tabs)
 	
-	table.insert(tabs, 1, path)
+	table.insert(tabs, 1, tab)
 	
 	globals.tabs:set(tabs, true)
 end
 
 function module.addTabBack(
-	path: string
-): ()
+	tab: TabConstructor.Tab
+)
 	local tabs = peek(globals.tabs)
 	
-	table.insert(tabs, path)
+	table.insert(tabs, tab)
 	
 	globals.tabs:set(tabs)
 end
 
 function module.addTab(
-	path: string,
+	tab: TabConstructor.Tab,
 	index: number
-): ()
+)
 	local tabs = peek(globals.tabs)
 	
-	table.insert(tabs, index, path)
+	table.insert(tabs, index, tab)
 	
 	globals.tabs:set(tabs)
 end
 
 function module.addTabAbove(
-	path: string
+	tab: TabConstructor.Tab
 ): number
 	local tabs = peek(globals.tabs)
 	local currentTabIndex = peek(globals.currentTabIndex)
 	
-	table.insert(tabs, currentTabIndex, path)
+	table.insert(tabs, currentTabIndex, tab)
 	
 	globals.tabs:set(tabs)
 	
@@ -79,12 +112,12 @@ function module.addTabAbove(
 end
 
 function module.addTabBelow(
-	path: string
+	tab: TabConstructor.Tab
 ): number
 	local tabs = peek(globals.tabs)
 	local currentTabIndex = peek(globals.currentTabIndex)
 
-	table.insert(tabs, currentTabIndex + 1, path)
+	table.insert(tabs, currentTabIndex + 1, tab)
 	
 	globals.tabs:set(tabs)
 
@@ -92,23 +125,23 @@ function module.addTabBelow(
 end
 
 function module.replaceTabWith(
-	path: string,
+	tab: TabConstructor.Tab,
 	index: number
-): ()
+)
 	local tabs = peek(globals.tabs)
 	
-	tabs[index] = path
+	tabs[index] = tab
 	
 	globals.tabs:set(tabs)
 end
 
 function module.replaceCurrentTabWith(
-	path: string
+	tab: TabConstructor.Tab
 ): number
 	local tabs = peek(globals.tabs)
 	local currentTabIndex = peek(globals.currentTabIndex)
 
-	tabs[currentTabIndex] = path
+	tabs[currentTabIndex] = tab
 
 	globals.tabs:set(tabs)
 	
@@ -116,13 +149,13 @@ function module.replaceCurrentTabWith(
 end
 
 function module.removeTab(
-	path: string
+	tab: TabConstructor.Tab
 ): number
 	local tabs = peek(globals.tabs)
-	local index = table.find(tabs, path)
+	local index = table.find(tabs, tab)
 	
 	if not index then
-		error(`cannot find '{ path }' tab.`, 2)
+		error(`cannot find '{ tab.url }' tab.`, 2)
 	end
 	
 	table.remove(tabs, index)
@@ -140,14 +173,6 @@ function module.removeTabByIndex(
 	table.remove(tabs, index)
 	
 	globals.tabs:set(tabs)
-end
-
-function module.findTab(
-	path: string
-): number?
-	local tabs = peek(globals.tabs)
-	
-	return table.find(tabs, path)
 end
 
 return module

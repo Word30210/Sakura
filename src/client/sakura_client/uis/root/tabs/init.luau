@@ -113,11 +113,11 @@ return function(
 				local positionDataValue: Fusion.Value<Tab.PositionData> = scope:Value {
 					Position = (index - 1) * 40 + (index - 1) * 8;
 				}
-				
+
 				tabInstance = scope:Tab {
 					Name = url;
 					
-					Path = url;
+					Tab = tab :: globals.Tab;
 					Position = positionDataValue;
 				}
 				
