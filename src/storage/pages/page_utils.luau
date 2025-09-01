@@ -46,7 +46,7 @@ function module.uninitializePage(
     pages: { [Scope]: Page }
 )
     for scope, page in pages do
-        page.Remover(scope :: Scope)
+        scope:doCleanup()
 
         pages[scope :: Scope] = nil
     end

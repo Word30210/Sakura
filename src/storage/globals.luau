@@ -26,26 +26,41 @@ local rootScope = scoped(Fusion)
 type Fusion = typeof(Fusion)
 type UsedAs<T> = Fusion.UsedAs<T>
 type Scope<T = Fusion> = Fusion.Scope<T>
+type Value<T> = Fusion.Value<T>
 
-export type Page<S=any> = {
-	Path: string;
-	Title: UsedAs<string>?;
-	Icon: UsedAs<string>?;
-	Content: Fusion.Child;
+type TabImpl = {
+    __index: TabImpl;
+
+    new: (
+        scope: Scope,
+        url: UsedAs<string>
+    ) -> Tab;
+
+    Destroy: (
+        self: Tab
+    ) -> ();
 }
+
+export type Tab = typeof(setmetatable({} :: {
+    url: UsedAs<string>;
+    scope: Scope;
+    dom: Instance?;
+
+    title: UsedAs<string?>?;
+    icon: UsedAs<string?>?;
+}, {} :: TabImpl))
 
 --#[ Main ]#--
 globals.root = root
 globals.rootScope = rootScope
 
-globals.tabs = rootScope:Value {
-	"sakura::home";
-	"sakura::whatsnewwhatsnew";
-}
-globals.currentTab = rootScope:Value((peek(globals.tabs) :: { string })[1])
+globals.tabs = rootScope:Value {} :: Value<{ Tab }>
+globals.currentTab = rootScope:Value(nil) :: Value<Tab?>
 globals.currentTabIndex = rootScope:Value(1)
-globals.draggingTab = rootScope:Value(nil)
+globals.draggingTab = rootScope:Value(nil) :: Value<Tab?>
 globals.addingNewTab = rootScope:Value(false)
+
+globals.mountedDoms = rootScope:Value {}
 
 globals.theme = rootScope:Value {
 	primaryBackgroundColor = Color3.fromRGB(36, 31, 31);
@@ -57,8 +72,6 @@ globals.theme = rootScope:Value {
 	secondaryContentColor = Color3.fromRGB(127, 127, 127);
 	tertiaryContentColor = Color3.fromRGB(66, 61, 61);
 }
-
-globals.scopes = {} :: { [string]: Scope }
 
 globals.functions = {}
 

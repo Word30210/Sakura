@@ -26,7 +26,7 @@ function module.getLength(): number
 	return #globals.tabs
 end
 
-function module.getCurrentTab(): string
+function module.getCurrentTab(): string?
 	return peek(globals.currentTab)
 end
 
