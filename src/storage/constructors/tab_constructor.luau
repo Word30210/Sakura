@@ -8,6 +8,7 @@ local sakuraStorage = ReplicatedStorage.sakura_storage
 local Modules = ReplicatedStorage.modules
 
 local TabModules = require(sakuraStorage.modules.tab_module)
+local RouteModule = require(sakuraStorage.modules.route_module)
 
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
@@ -18,6 +19,7 @@ local scoped = Fusion.scoped
 type Fusion = typeof(Fusion)
 type UsedAs<T> = Fusion.UsedAs<T>
 type Scope<T = Fusion> = Fusion.Scope<T>
+type Value<T> = Fusion.Value<T>
 
 type TabImpl = {
     __index: TabImpl;
@@ -32,17 +34,18 @@ type TabImpl = {
     ) -> ();
 
     DestroyAndRemoveFromTabs: (
-        self: Tab
+        self: Tab,
+        autoSelectOtherTab: boolean?
     ) -> ();
 }
 
 export type Tab = typeof(setmetatable({} :: {
     url: UsedAs<string>;
     scope: Scope;
-    dom: Instance?;
+    dom: GuiObject?;
 
-    title: UsedAs<string?>?;
-    icon: UsedAs<string?>?;
+    title: Value<string?>;
+    icon: Value<string?>;
 }, {} :: TabImpl))
 
 --#[ Variables ]#--
@@ -65,6 +68,19 @@ function tabImpl.new(
 
     self.url = url
     self.scope = innerScope
+
+    local peekedURL = peek(url)
+    local pageRoute = RouteModule.getClientPageRoute(peekedURL)
+
+    if not pageRoute then
+        globals.functions.warn {
+            title = script.Name;
+            why = `cannot find page route for '{ peekedURL }' url.`;
+        }
+    end
+
+    self.title = scope:Value(pageRoute and pageRoute.initialTitle)
+    self.icon = scope:Value(pageRoute and pageRoute.initialIcon)
 
     table.insert(
         scope,
@@ -94,8 +110,6 @@ function tabImpl:DestroyAndRemoveFromTabs()
     for key, value in self do
         self[key] = nil
     end
-
-
 end
 
 return tabImpl

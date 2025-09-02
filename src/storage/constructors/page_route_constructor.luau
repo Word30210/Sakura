@@ -4,11 +4,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 --#[ Head Variables ]#--
 local SakuraStorage = ReplicatedStorage.sakura_storage
 
+local globals = require(SakuraStorage.globals)
+
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
-
---#[ Constructors ]#--
-local TabConstructor = require(SakuraStorage.constructors.tab_constructor)
 
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
@@ -20,34 +19,37 @@ type Fusion = typeof(Fusion)
 type UsedAs<T> = Fusion.UsedAs<T>
 type Scope<T = Fusion> = Fusion.Scope<T>
 
+type ConstructDomFunction = (
+    self: PageRoute,
+    tab: globals.Tab,
+    params: any
+) -> GuiObject
+
 type PageRouteImpl = {
     __index: PageRouteImpl;
 
     new: (
-        urlPattern: string
+        urlPattern: string,
+        initialTitle: string?,
+        initialIcon: string?
     ) -> PageRoute;
 
     ConstructDom: (
         self: PageRoute,
-        scope: Scope,
+        tab: globals.Tab,
         params: any
-    ) -> Instance;
+    ) -> GuiObject;
 }
 
 export type PageRoute = typeof(setmetatable({} :: {
     urlPattern: string;
+    initialTitle: string?;
+    initialIcon: string?;
 
-    constructDom: (
-        (
-            scope: Scope,
-            params: any
-        ) -> Instance
-    )?;
+    constructDom: ConstructDomFunction?;
 }, {} :: PageRouteImpl))
 
 --#[ Variables ]#--
-local globals = require(SakuraStorage.globals)
-
 local pageRouteImpl = {} :: PageRouteImpl
 pageRouteImpl.__index = pageRouteImpl
 
@@ -56,24 +58,32 @@ pageRouteImpl.__index = pageRouteImpl
 
 --#[ Main ]#--
 function pageRouteImpl.new(
-    urlPattern: string
+    urlPattern: string,
+    initialTitle: string?,
+    initialIcon: string?
 ): PageRoute
     local self = {}
 
     self.urlPattern = urlPattern
+    self.initialTitle = initialTitle
+    self.initialIcon = initialIcon
 
     return setmetatable(self, pageRouteImpl)
 end
 
 function pageRouteImpl:ConstructDom(
-    scope: Scope,
+    tab: globals.Tab,
     params: any
-): Instance
+): GuiObject
     if not self.constructDom then
-        error("No constructDom function defined for this PageRoute")
+        globals.functions.panic {
+            title = script.Name;
+            why = "No constructDom function defined for this PageRoute";
+            level = 3;
+        }
     end
 
-    return self.constructDom(scope, params)
+    return (self.constructDom :: ConstructDomFunction)(self, tab, params)
 end
 
 return pageRouteImpl

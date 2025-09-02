@@ -55,8 +55,8 @@ return function(
 	props: props
 )
 	local tabs = globals.tabs
-	local currentTab = globals.currentTab
-	local currentTabIndex = globals.currentTabIndex
+	local selectedTab = globals.selectedTab
+	local selectedTabIndex = globals.selectedTabIndex
 	
 	local isHovering = scope:Value(false)
 	local isHeldDown = scope:Value(false)
@@ -69,9 +69,9 @@ return function(
 	
 	local zIndexValue = scope:Value(1)
 
-	local currentTabObserver = scope:Observer(currentTab):onBind(function()
+	local selectedTabObserver = scope:Observer(selectedTab):onBind(function()
 		local peekedTab = peek(props.Tab)
-		local peekedCurrnetTab = peek(currentTab)
+		local peekedCurrnetTab = peek(selectedTab)
 
 		if peekedCurrnetTab == peekedTab then
 			isSelected:set(true)
@@ -197,9 +197,9 @@ return function(
 				local peekedPositionData: PositionData = peek(props.Position)
 				local peekedPosition: number = peek(peekedPositionData.Position)
 				local peekedTabs = peek(globals.tabs)
-				local peekedCurrentTab = peek(globals.currentTab)
+				local peekedselectedTab = peek(globals.selectedTab)
 
-				TabModule.setCurrentTab(peekedTab)
+				TabModule.selectTab(peekedTab)
 				
 				if not peek(globals.draggingTab) then
 					globals.draggingTab:set(peekedTab)

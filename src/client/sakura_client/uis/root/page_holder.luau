@@ -9,7 +9,7 @@ local SakuraStorage = ReplicatedStorage.sakura_storage
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
 
-local RouterModule = require(SakuraStorage.modules.router_module)
+local RouteModule = require(SakuraStorage.modules.route_module)
 
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
@@ -40,53 +40,66 @@ return function(
     scope: Scope,
     props: props
 )
-    local tabObserver = scope:Observer(globals.tabs)
-    local oldTabs = {}
-    local doms: Fusion.Value<{ Instance }> = scope:Value {}
+    local pageHolder = scope:New "Frame" {
+        Size = UDim2.new(1, -158, 1, 0); --// 100% - 150px - 8pad
 
-    local function updatePages()
-        local tabs = peek(globals.tabs)
+		BackgroundColor3 = scope:Computed(function(
+            use: Fusion.Use
+        )
+            return use(globals.theme).secondaryBackgroundColor
+        end);
 
-        local tabHash = {}
-        local oldTabHash = {}
+		[Children] = {
+			scope:New "UICorner" {
+				CornerRadius = UDim.new(0, 4);
+			};
+		}
+    }
 
-        for _, path in tabs do
-            tabHash[path] = true
+    local selectedTabObserver = scope:Observer(globals.selectedTab)
+    local oldSelectedTab: globals.Tab? = nil
+
+    local function updatePage()
+        local selectedTab = peek(globals.selectedTab)
+
+        if oldSelectedTab then
+            if oldSelectedTab.dom then
+                oldSelectedTab.dom.Visible = false
+                oldSelectedTab.dom.Parent = nil
+            end
         end
 
-        for _, path in oldTabs do
-            oldTabHash[path] = true
-        end
-
-        local peekedDoms = peek(doms)
-        local resolvedDoms: { [string]: Instance } = {}
-        local finalDoms: { Instance } = {}
-
-        for index = #peekedDoms, 1, -1 do
-            local dom = peekedDoms[index]
-            local path = dom.Name
-
-            if not tabHash[path] then
-                dom:Destroy()
-
-                table.remove(peekedDoms, index)
+        if selectedTab then
+            if selectedTab.dom then
+                selectedTab.dom.Visible = true
+                selectedTab.dom.Parent = pageHolder
             else
-                resolvedDoms[path] = dom
-            end
-        end
+                local selectedTabURL = peek(selectedTab.url)
+                local pageRoute = RouteModule.getClientPageRoute(selectedTabURL)
 
-        for index, path in tabs do
-            local dom = resolvedDoms[path]
+                if not pageRoute then
+                    globals.functions.warn {
+                        title = script.Name;
+                        why = `cannot find page route for '{ selectedTabURL }' url.`;
+                        level = 3;
+                    }
 
-            if not dom then
-                local page = RouterModule.getClientPage(path)
-
-                if page then
-                    (require :: any)(page.pageModule).new()
+                    return
                 end
-            end
 
-            table.insert(finalDoms, dom)
+                local newDom = pageRoute:ConstructDom(selectedTab, {})
+
+                selectedTab.dom = newDom
+
+                newDom.Parent = pageHolder
+                newDom.Visible = true
+            end
         end
+
+        oldSelectedTab = selectedTab
     end
+
+    selectedTabObserver:onChange(updatePage)
+
+    return pageHolder
 end

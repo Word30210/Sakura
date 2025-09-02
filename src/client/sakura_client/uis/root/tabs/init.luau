@@ -87,12 +87,12 @@ return function(
 				table.remove(peekedTabInstances, index)
 				positionDatas[url] = nil
 				
-				local peekedCurrentTab = peek(globals.currentTab)
+				local peekedselectedTab = peek(globals.selectedTab)
 				local peekedDraggingTab = peek(globals.draggingTab)
 
-				if peekedCurrentTab and peekedCurrentTab.url == url then
-					globals.currentTab:set(nil)
-					globals.currentTabIndex:set(nil)
+				if peekedselectedTab and peekedselectedTab.url == url then
+					globals.selectedTab:set(nil)
+					globals.selectedTabIndex:set(nil)
 				end
 				
 				if peekedDraggingTab and peekedDraggingTab.url == url then

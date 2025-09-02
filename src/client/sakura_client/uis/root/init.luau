@@ -28,6 +28,7 @@ local ThemedBorderFrame = require(Components.themed_border_frame)
 local SideButtons = require(script.side_buttons)
 local AddNewTabButton = require(script.add_new_tab_button)
 local Tabs = require(script.tabs)
+local PageHolder = require(script.page_holder)
 
 --#[ Variables ]#--
 local globals = require(SakuraStorage.globals)
@@ -39,6 +40,7 @@ local scope = globals.rootScope:innerScope(
 		SideButtons = SideButtons;
 		AddNewTabButton = AddNewTabButton;
 		Tabs = Tabs;
+		PageHolder = PageHolder;
 	}
 )
 local tabs = globals.tabs
@@ -107,24 +109,7 @@ scope:New "ScreenGui" {
 				}
 			};
 
-			scope:New "Frame" {
-				Size = UDim2.new(1, -158, 1, 0); --// 100% - 150px - 8pad
-
-				BackgroundColor3 = Color3.fromRGB(46, 41, 41);
-
-				[Children] = {
-					scope:New "UICorner" {
-						CornerRadius = UDim.new(0, 4);
-					};
-
-					scope:New "UIPadding" {
-						PaddingBottom = UDim.new(0, 4);
-						PaddingLeft = UDim.new(0, 4);
-						PaddingRight = UDim.new(0, 4);
-						PaddingTop = UDim.new(0, 4);
-					};
-				}
-			};
+			scope:PageHolder {};
 		}
 	}
 }

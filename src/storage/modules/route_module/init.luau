@@ -39,13 +39,17 @@ function module.registerClientPageRoute(
     pageRoute: PageRouteConstructor.PageRoute
 )
     if registeredClientPageRoutes[pageRoute.urlPattern] then
-        warn(`[RouterModule] registerClientPageRoute: URL pattern '{ pageRoute.urlPattern }' is already registered.`)
-
-        return
+        globals.functions.panic {
+            title = script.Name;
+            why = `URL pattern '{ pageRoute.urlPattern }' is already registered.`;
+            level = 3;
+        }
     end
+
+    registeredClientPageRoutes[pageRoute.urlPattern] = pageRoute
 end
 
-function module.getClientPage(
+function module.getClientPageRoute(
     url: string
 ): PageRouteConstructor.PageRoute?
     return registeredClientPageRoutes[url]

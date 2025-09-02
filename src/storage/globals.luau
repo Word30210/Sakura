@@ -39,24 +39,59 @@ type TabImpl = {
     Destroy: (
         self: Tab
     ) -> ();
+
+    DestroyAndRemoveFromTabs: (
+        self: Tab,
+        autoSelectOtherTab: boolean?
+    ) -> ();
 }
 
 export type Tab = typeof(setmetatable({} :: {
     url: UsedAs<string>;
     scope: Scope;
-    dom: Instance?;
+    dom: GuiObject?;
 
-    title: UsedAs<string?>?;
-    icon: UsedAs<string?>?;
+    title: Value<string?>;
+    icon: Value<string?>;
 }, {} :: TabImpl))
+
+type ConstructDomFunction = (
+    self: PageRoute,
+    tab: Tab,
+    params: any
+) -> GuiObject
+
+type PageRouteImpl = {
+    __index: PageRouteImpl;
+
+    new: (
+        urlPattern: string,
+        initialTitle: string?,
+        initialIcon: string?
+    ) -> PageRoute;
+
+    ConstructDom: (
+        self: PageRoute,
+        tab: Tab,
+        params: any
+    ) -> GuiObject;
+}
+
+export type PageRoute = typeof(setmetatable({} :: {
+    urlPattern: string;
+    initialTitle: string?;
+    initialIcon: string?;
+
+    constructDom: ConstructDomFunction?;
+}, {} :: PageRouteImpl))
 
 --#[ Main ]#--
 globals.root = root
 globals.rootScope = rootScope
 
 globals.tabs = rootScope:Value {} :: Value<{ Tab }>
-globals.currentTab = rootScope:Value(nil) :: Value<Tab?>
-globals.currentTabIndex = rootScope:Value(1)
+globals.selectedTab = rootScope:Value(nil) :: Value<Tab?>
+globals.selectedTabIndex = rootScope:Value(1)
 globals.draggingTab = rootScope:Value(nil) :: Value<Tab?>
 globals.addingNewTab = rootScope:Value(false)
 
@@ -74,6 +109,25 @@ globals.theme = rootScope:Value {
 }
 
 globals.functions = {}
+
+function globals.functions.panic(
+	panicData: {
+		title: string?;
+		why: string;
+		level: number?;
+	}
+): never
+	error(panicData.why, panicData.level or 2)
+end
+
+function globals.functions.warn(
+	warnData: {
+		title: string?;
+		why: string;
+	}
+)
+	warn(warnData.why)
+end
 
 function globals.functions.addNumberToColor3BasedRGB(
 	color3: Color3,

@@ -247,8 +247,8 @@ return function(
 						globals.tabs:set(peekedTabs)
 					end
 					
-					globals.currentTab:set("sakura::menu")
-					globals.currentTabIndex:set(#peekedTabs)
+					globals.selectedTab:set("sakura::menu")
+					globals.selectedTabIndex:set(#peekedTabs)
 				end;
 			});
 			
@@ -265,8 +265,8 @@ return function(
 						globals.tabs:set(peekedTabs)
 					end
 					
-					globals.currentTab:set("sakura::settings")
-					globals.currentTabIndex:set(#peekedTabs)
+					globals.selectedTab:set("sakura::settings")
+					globals.selectedTabIndex:set(#peekedTabs)
 				end;
 			});
 		}

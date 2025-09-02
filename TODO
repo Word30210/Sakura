@@ -3,5 +3,8 @@
 보다 더 정확한 파싱을 위해 urlPatter과 그냥 url의 ebnf를 짜야 할듯
 
 # tab
-탭 드래그 하는 도중에 새로운 탭이 추가되었을 때 버그 안나는지 확인 필요
-tab.dom 로드 시키는거 만들기
+tab.dom 로드시키는거 만듦(이거 관련해서 몇가지 테스팅 필요)
+sakura::home, sakura::whatsnew, sakura::__notfound, sakura::__empty 페이지 만들기
+side_buttons.luau안에 있는 문자열로 이루어진 탭들 tab_constructor로 변경 필요
+side_buttons.luau고치고 settings탭 열고 닫고 했을 때 딱히 문제 없는지 확인 필요
+tab지워지면(TabModule.removeTab) 없어진 곳 안채워짐(string literal -> tab_constructor)로 바꾸는 과정에서 내가 실수한듯
