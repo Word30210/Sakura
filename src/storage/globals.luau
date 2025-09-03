@@ -36,10 +36,6 @@ type TabImpl = {
         url: UsedAs<string>
     ) -> Tab;
 
-    Destroy: (
-        self: Tab
-    ) -> ();
-
     DestroyAndRemoveFromTabs: (
         self: Tab,
         autoSelectOtherTab: boolean?
@@ -48,6 +44,7 @@ type TabImpl = {
 
 export type Tab = typeof(setmetatable({} :: {
     url: UsedAs<string>;
+	id: string;
     scope: Scope;
     dom: GuiObject?;
 

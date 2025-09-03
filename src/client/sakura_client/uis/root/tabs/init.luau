@@ -1,9 +1,3 @@
---[[
-
-문제점 1. 탭을 마우스로 드래그 중 일 때에도 문제가 없는지 확인 필요
-
-]]
-
 --#[ Services ]#--
 local Player = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,6 +8,8 @@ local globals = require(SakuraStorage.globals)
 
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
+
+local TabModule = require(SakuraStorage.modules.tab_module)
 
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
@@ -43,7 +39,7 @@ local function isEmpty(
 	t: { [any]: any }
 ): boolean
 	return not next(t)
-end
+end	
 
 --#[ Main ]#--
 return function(
@@ -66,11 +62,11 @@ return function(
 		local oldTabsHash = {}
 		
 		for _, tab in tabs do
-			tabsHash[peek(tab.url)] = true
+			tabsHash[tab.id] = true
 		end
 		
 		for _, tab in oldTabs do
-			oldTabsHash[peek(tab.url)] = true
+			oldTabsHash[tab.id] = true
 		end
 
 		local peekedTabInstances = peek(tabInstances)
@@ -79,35 +75,35 @@ return function(
 
 		for index = #peekedTabInstances, 1, -1 do --// table.remove해도 index 오차 안생기게 하기 위해 역순으로 진행
 			local instance = peekedTabInstances[index]
-			local url = instance.Name
+			local id = instance.Name
 			
-			if not tabsHash[url] then --// 만약 tabsHash에 없다면(removedTab) 삭제
+			if not tabsHash[id] then --// 만약 tabsHash에 없다면(removedTab) 삭제
 				instance:Destroy()
 				
 				table.remove(peekedTabInstances, index)
-				positionDatas[url] = nil
+				positionDatas[id] = nil
 				
 				local peekedselectedTab = peek(globals.selectedTab)
 				local peekedDraggingTab = peek(globals.draggingTab)
 
-				if peekedselectedTab and peekedselectedTab.url == url then
+				if peekedselectedTab and peekedselectedTab.id == id then
 					globals.selectedTab:set(nil)
 					globals.selectedTabIndex:set(nil)
 				end
 				
-				if peekedDraggingTab and peekedDraggingTab.url == url then
+				if peekedDraggingTab and peekedDraggingTab.id == id then
 					globals.draggingTab:set(nil)
 				end
 			else --// tabsHash에 있다면(살아남은 Tab) resolvedTabInstances에 넣기
-				resolvedTabInstances[url] = instance
+				resolvedTabInstances[id] = instance
 			end
 		end
 		
 		local peekedDraggingTab = peek(globals.draggingTab)
 		
 		for index, tab in tabs do
-			local url = peek(tab.url)
-			local tabInstance = resolvedTabInstances[url]
+			local id = tab.id
+			local tabInstance = resolvedTabInstances[id]
 			
 			if not tabInstance then --// 만약 tabInstance가 없다면(addedTab) 새로 생성
 				local positionDataValue: Fusion.Value<Tab.PositionData> = scope:Value {
@@ -115,19 +111,19 @@ return function(
 				}
 
 				tabInstance = scope:Tab {
-					Name = url;
+					Name = tab.id;
 					
 					Tab = tab :: globals.Tab;
 					Position = positionDataValue;
 				}
 				
-				positionDatas[url] = positionDataValue
+				positionDatas[id] = positionDataValue
 			end
 			
 			finalTabInstances[index] = tabInstance
-			
-			if peekedDraggingTab and peekedDraggingTab.url ~= url then
-				positionDatas[url]:set {
+
+			if not peekedDraggingTab or (peekedDraggingTab and peekedDraggingTab.id ~= id) then
+				positionDatas[id]:set {
 					Position = (index - 1) * 40 + (index - 1) * 8;
 				}
 			end

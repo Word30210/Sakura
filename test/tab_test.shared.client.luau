@@ -37,12 +37,6 @@ local whatsnewTab = TabConstructor.new(globals.rootScope, "sakura::whatsnew")
 TabModule.addTabBack(homeTab)
 TabModule.addTabBack(whatsnewTab)
 
-local settingsTab = TabConstructor.new(globals.rootScope, "sakura::settings")
-local menuTab = TabConstructor.new(globals.rootScope, "sakura::menu")
-
-TabModule.addTabBack(settingsTab)
-TabModule.addTabBack(menuTab)
-
 -- TabModule.removeTab(homeTab)
 -- homeTab:Destroy()
 

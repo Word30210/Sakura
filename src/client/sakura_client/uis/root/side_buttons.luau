@@ -8,6 +8,11 @@ local SakuraStorage = ReplicatedStorage.sakura_storage
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
 
+local TabModule = require(SakuraStorage.modules.tab_module)
+
+--#[ Constructors ]#--
+local TabConstructor = require(SakuraStorage.constructors.tab_constructor)
+
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
 local peek = Fusion.peek
@@ -222,6 +227,9 @@ return function(
 	scope: Scope,
 	props: props
 )
+	local menuTabId: string? = nil
+	local settingsTabId: string? = nil
+
 	return scope:New "Frame" {
 		Size = UDim2.new(1, 0, 0, 64);
 		
@@ -239,16 +247,27 @@ return function(
 				Icon = "rbxassetid://74560567253978";
 				
 				OnMouseButton1Click = function()
-					local peekedTabs = peek(globals.tabs)
-					
-					if not table.find(peekedTabs, "sakura::menu") then
-						table.insert(peekedTabs, "sakura::menu")
-						
-						globals.tabs:set(peekedTabs)
+					if not menuTabId then
+						local tab = TabConstructor.new(scope, "sakura::menu")
+
+						menuTabId = tab.id
+
+						TabModule.addTabBack(tab)
+						TabModule.selectTab(tab)
+					else
+						local foundTab = TabModule.findMountedTabById(menuTabId)
+
+						if not foundTab then
+							local tab = TabConstructor.new(scope, "sakura::menu")
+
+							menuTabId = tab.id
+
+							TabModule.addTabBack(tab)
+							TabModule.selectTab(tab)
+						else
+							TabModule.selectTab(foundTab)
+						end
 					end
-					
-					globals.selectedTab:set("sakura::menu")
-					globals.selectedTabIndex:set(#peekedTabs)
 				end;
 			});
 			
@@ -257,16 +276,27 @@ return function(
 				Icon = "rbxassetid://135586789898242";
 				
 				OnMouseButton1Click = function()
-					local peekedTabs = peek(globals.tabs)
+					if not settingsTabId then
+						local tab = TabConstructor.new(scope, "sakura::settings")
 
-					if not table.find(peekedTabs, "sakura::settings") then
-						table.insert(peekedTabs, "sakura::settings")
+						settingsTabId = tab.id
 
-						globals.tabs:set(peekedTabs)
+						TabModule.addTabBack(tab)
+						TabModule.selectTab(tab)
+					else
+						local foundTab = TabModule.findMountedTabById(settingsTabId)
+
+						if not foundTab then
+							local tab = TabConstructor.new(scope, "sakura::settings")
+
+							settingsTabId = tab.id
+
+							TabModule.addTabBack(tab)
+							TabModule.selectTab(tab)
+						else
+							TabModule.selectTab(foundTab)
+						end
 					end
-					
-					globals.selectedTab:set("sakura::settings")
-					globals.selectedTabIndex:set(#peekedTabs)
 				end;
 			});
 		}

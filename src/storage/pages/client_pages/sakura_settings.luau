@@ -32,7 +32,7 @@ local globals = require(SakuraStorage.globals)
 --
 
 --#[ Main ]#--
-local pageRoute = PageRuoteConstructor.new("sakura::settings", "세틴;;")
+local pageRoute = PageRuoteConstructor.new("sakura::settings", "세틴;;", "rbxassetid://135586789898242")
 
 function pageRoute:constructDom(
 	tab: globals.Tab,
@@ -58,6 +58,11 @@ function pageRoute:constructDom(
 
 	selectedTabObserver:onChange(updateTitleAndRandomNumber)
 	updateTitleAndRandomNumber()
+
+	table.insert(
+		scope,
+		selectedTabObserver
+	)
 
 	return scope:New "Frame" {
 		Size = UDim2.fromScale(1, 1);

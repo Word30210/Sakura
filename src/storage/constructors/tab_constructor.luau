@@ -29,10 +29,6 @@ type TabImpl = {
         url: UsedAs<string>
     ) -> Tab;
 
-    Destroy: (
-        self: Tab
-    ) -> ();
-
     DestroyAndRemoveFromTabs: (
         self: Tab,
         autoSelectOtherTab: boolean?
@@ -41,6 +37,7 @@ type TabImpl = {
 
 export type Tab = typeof(setmetatable({} :: {
     url: UsedAs<string>;
+    id: string;
     scope: Scope;
     dom: GuiObject?;
 
@@ -54,8 +51,16 @@ local globals = require(sakuraStorage.globals)
 local tabImpl = {} :: TabImpl
 tabImpl.__index = tabImpl
 
+local tabIdCount = 0
+
 --#[ Functions ]#--
---
+local function getUniqueTabId(): string
+    local returningId = tabIdCount
+
+    tabIdCount += 1
+
+    return tostring(returningId)
+end
 
 --#[ Main ]#--
 function tabImpl.new(
@@ -67,6 +72,7 @@ function tabImpl.new(
     local self = {}
 
     self.url = url
+    self.id = getUniqueTabId()
     self.scope = innerScope
 
     local peekedURL = peek(url)
@@ -90,18 +96,12 @@ function tabImpl.new(
     return setmetatable(self, tabImpl)
 end
 
-function tabImpl:Destroy()
-    local self = self :: any
-
-    setmetatable(self, nil)
-
-    for key, value in self do
-        self[key] = nil
-    end
-end
-
 function tabImpl:DestroyAndRemoveFromTabs()
-    TabModules.removeTab(self)
+    if TabModules.findMountedTabById(self.id) then
+        TabModules.removeTab(self)
+    end
+
+    self.scope:doCleanup()
 
     local self = self :: any
 

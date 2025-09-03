@@ -20,7 +20,37 @@ local peek = Fusion.peek
 local scoped = Fusion.scoped
 
 --#[ Variables ]#--
---
+local mountedTabIdCaches: typeof(
+	setmetatable(
+		{} :: { [string]: globals.Tab },
+		{}
+	)
+) = setmetatable(
+	{},
+	{ __mode = "v" }
+)
+
+--#[ Functions ]#--
+local function cacheTab(
+	tab: globals.Tab
+)
+	if mountedTabIdCaches[tab.id] then
+		globals.functions.warn {
+			title = script.Name;
+			why = `tab '{ tab.url }' is already cached.`;
+		}
+
+		return
+	end
+
+	mountedTabIdCaches[tab.id] = tab
+end
+
+local function decacheTab(
+	tab: globals.Tab
+)
+	mountedTabIdCaches[tab.id] = nil
+end
 
 --#[ Main ]#--
 function module.getTabs(): Fusion.Value<{ globals.Tab }>
@@ -94,6 +124,12 @@ function module.findTabByURL(
 	return nil
 end
 
+function module.findMountedTabById(
+	id: string
+): globals.Tab?
+	return mountedTabIdCaches[id]
+end
+
 function module.addTabFront(
 	tab: globals.Tab
 )
@@ -107,6 +143,8 @@ function module.addTabFront(
 	end
 	
 	table.insert(tabs, 1, tab)
+
+	cacheTab(tab)
 	
 	globals.tabs:set(tabs, true)
 end
@@ -124,6 +162,8 @@ function module.addTabBack(
 	end
 	
 	table.insert(tabs, tab)
+
+	cacheTab(tab)
 	
 	globals.tabs:set(tabs)
 end
@@ -142,6 +182,8 @@ function module.addTab(
 	end
 	
 	table.insert(tabs, index, tab)
+
+	cacheTab(tab)
 	
 	globals.tabs:set(tabs)
 end
@@ -160,6 +202,8 @@ function module.addTabAbove(
 	end
 	
 	table.insert(tabs, selectedTabIndex, tab)
+
+	cacheTab(tab)
 	
 	globals.tabs:set(tabs)
 	
@@ -180,6 +224,8 @@ function module.addTabBelow(
 	end
 
 	table.insert(tabs, selectedTabIndex + 1, tab)
+
+	cacheTab(tab)
 	
 	globals.tabs:set(tabs)
 
@@ -198,12 +244,16 @@ function module.replaceTabWith(
 			level = 3;
 		}
 	end
+
+	decacheTab(tabs[index])
 	
 	tabs[index] = tab
 
 	if index == peek(globals.selectedTabIndex) then
 		globals.selectedTab:set(tab)
 	end
+
+	cacheTab(tab)
 	
 	globals.tabs:set(tabs)
 end
@@ -221,7 +271,11 @@ function module.replaceSelectedTabWith(
 		}
 	end
 
+	decacheTab(tabs[selectedTabIndex])
+
 	tabs[selectedTabIndex] = tab
+
+	cacheTab(tab)
 
 	globals.tabs:set(tabs)
 	globals.selectedTab:set(tab)
@@ -246,6 +300,8 @@ function module.removeTab(
 	local index = index :: number
 	
 	table.remove(tabs, index)
+
+	decacheTab(tab)
 	
 	globals.tabs:set(tabs)
 
@@ -267,7 +323,11 @@ function module.removeTabByIndex(
 ): ()
 	local tabs = peek(globals.tabs)
 	
-	table.remove(tabs, index)
+	local tab = table.remove(tabs, index)
+
+	if tab then --// kinda weird...
+		decacheTab(tab)
+	end
 	
 	globals.tabs:set(tabs)
 end

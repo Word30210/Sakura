@@ -368,7 +368,13 @@ return function(
 
 				BackgroundTransparency = 1;
 
-				Image = "rbxassetid://82021737679600";
+				Image = scope:Computed(function(
+					use: Fusion.Use
+				)
+					local tab = props.Tab
+
+					return use(tab.icon) or "rbxassetid://110302062292604"
+				end);
 				ImageColor3 = scope:Spring(
 					scope:Computed(function(
 						use: Fusion.Use
@@ -526,15 +532,9 @@ return function(
 				end;
 
 				[OnEvent "MouseButton1Click"] = function()
-					local peekedTab = peek(props.Tab)
-					local peekedTabs = peek(tabs)
-					local index = table.find(peekedTabs, peekedTab)
-					
-					if index then
-						table.remove(peekedTabs, index)
-						
-						tabs:set(peekedTabs)
-					end
+					local tab = props.Tab
+
+					tab:DestroyAndRemoveFromTabs(true)
 				end;
 				
 				AnchorPoint = Vector2.new(1, 0.5);
