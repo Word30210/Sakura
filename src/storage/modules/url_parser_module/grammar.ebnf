@@ -1,0 +1,13 @@
+(* url_pattern & url *)
+escapeContent ::= . | %{0-9{0-9}%} | %{u0-9{0-9}%}
+
+name ::= (a-zA-Z | %- | _){ <name> }
+nameWithEscape ::= (a-zA-Z | %- | _ | %^<escapeContent>)
+scope ::= <name>
+head_page_name ::= <name>
+segment ::= <nameWithEscape>
+argument ::= %%<nameWithEscape>%:<name>%%
+query ::= <nameWithEscape>%=<nameWithEscape>{%&<nameWithEscape>%=<nameWithEscape>}
+
+url_pattern ::= <scope>@<head_page_name>{%:%:(<segment> | <argument>)}
+url ::= <scope>@<head_page_name>{%:%:<segment>}{?<query>}
