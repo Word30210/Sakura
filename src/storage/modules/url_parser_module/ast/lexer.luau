@@ -43,6 +43,11 @@ export type LexerImpl = {
     readKind: (
         self: Lexer
     ) -> Lexme;
+
+    tostring: (
+        self: Lexer,
+        lexme: Lexme
+    ) -> string;
 }
 
 export type Lexer = typeof(setmetatable({} :: {
@@ -59,6 +64,8 @@ export type Lexer = typeof(setmetatable({} :: {
 export type Lexme = {
     kind: string;
     span: vector;
+    malformed: boolean?;
+    metadata: any?;
 }
 
 export type Issue = {
@@ -107,6 +114,20 @@ local function name(
         or character == char "_"
         or character == char "-"
         or character == char "."
+end
+
+local function digit(
+    character: number
+): boolean
+    return char "0" <= character and character <= char "9"
+end
+
+local function hex(
+    character: number
+): boolean
+    return (char "0" <= character and character <= char "9")
+        or (char "a" <= character and character <= char "f")
+        or (char "A" <= character and character <= char "F")
 end
 
 --#[ Main ]#--
@@ -163,10 +184,97 @@ end
 function LexerImpl:readName(): Lexme
     local startPosition = self.position
     local character = self:peek()
+    local malformed = nil
+    local includingEscapeBased10 = nil
+    local includingEscapeBased16 = nil
 
     while
-        name(character) and not self:eof()
+        (
+            name(character)
+            or character == char "^"
+            or character == char "$"
+        )
+        and not self:eof()
     do
+        if character == char "^" then
+            self:bump()
+        elseif character == char "$" then
+            self:bump()
+            character = self:peek()
+
+            if character ~= char "{" then
+                self:throw("Expected '{' after '$' in name.")
+
+                malformed = true
+
+                continue
+            end
+
+            self:bump()
+            character = self:peek()
+
+            if character == char "}" then
+                self:bump()
+                character = self:peek()
+
+                continue
+            elseif character == char "u" then
+                includingEscapeBased16 = true
+
+                while true do
+                    if self:eof() then
+                        self:throw("Unexpected end of file in ascii/unicode escape sequence.")
+
+                        malformed = true
+
+                        break
+                    end
+
+                    if character == char "}" then
+                        break
+                    end
+
+                    if not hex(character) then
+                        self:throw("Expected hex character in ascii/unicode escape sequence.")
+
+                        malformed = true
+
+                        break
+                    end
+
+                    self:bump()
+                    character = self:peek()
+                end
+            else
+                includingEscapeBased10 = true
+
+                while true do
+                    if self:eof() then
+                        self:throw("Unexpected end of file in ascii/unicode escape sequence.")
+
+                        malformed = true
+
+                        break
+                    end
+
+                    if character == char "}" then
+                        break
+                    end
+
+                    if not digit(character) then
+                        self:throw("Expected hex character in ascii/unicode escape sequence.")
+
+                        malformed = true
+
+                        break
+                    end
+
+                    self:bump()
+                    character = self:peek()
+                end
+            end
+        end
+
         self:bump()
         character = self:peek()
     end
@@ -174,6 +282,11 @@ function LexerImpl:readName(): Lexme
     return {
         kind = "name";
         span = vector.create(startPosition, self.position - 1);
+        malformed = malformed;
+        metadata = if includingEscapeBased10 or includingEscapeBased16 then {
+            includingEscapeBased10 = includingEscapeBased10;
+            includingEscapeBased16 = includingEscapeBased16;
+        } else nil;
     }
 end
 
@@ -192,10 +305,14 @@ function LexerImpl:readKind(): Lexme
     if character == char "@" then
         self:bump()
 
-        return {
+        local token = {
             kind = "at";
             span = vector.create(startPosition, startPosition);
         }
+
+        table.insert(self.tokens, token)
+
+        return token
     elseif character == char ":" then
         self:bump()
 
@@ -204,43 +321,69 @@ function LexerImpl:readKind(): Lexme
         if character == char ":" then
             self:bump()
 
-            return {
+            local token = {
                 kind = "double_colon";
                 span = vector.create(startPosition, startPosition + 1);
             }
+
+            table.insert(self.tokens, token)
+
+            return token
         else
-            return {
+            self:throw(`Unknown character '{ character }' found.`)
+
+            local token = {
                 kind = "unknwon";
                 span = vector.create(startPosition, startPosition);
             }
+
+            table.insert(self.tokens, token)
+
+            return token
         end
     elseif character == char "?" then
         self:bump()
 
-        return {
+        local token = {
             kind = "question_mark";
             span = vector.create(startPosition, startPosition);
         }
+
+        table.insert(self.tokens, token)
+
+        return token
     elseif character == char "=" then
         self:bump()
 
-        return {
+        local token = {
             kind = "equal";
             span = vector.create(startPosition, startPosition);
         }
+
+        table.insert(self.tokens, token)
+
+        return token
     elseif character == char "&" then
         self:bump()
 
-        return {
+        local token = {
             kind = "ampersand";
             span = vector.create(startPosition, startPosition);
         }
+
+        table.insert(self.tokens, token)
+
+        return token
     elseif character == 0 then
-        return {
+        local token = {
             kind = "eof";
             span = vector.create(self.length, self.length);
         }
-    elseif name(character) then
+
+        table.insert(self.tokens, token)
+    
+        return token
+    elseif name(character) or character == char "^" or character == char "$" then
         return self:readName()
     elseif whitespace(character) then
         repeat
@@ -248,13 +391,48 @@ function LexerImpl:readKind(): Lexme
             character = self:peek()
         until not whitespace(character)
 
-        return self:readKind()
+        local token = self:readKind()
+
+        table.insert(self.tokens, token)
+
+        return token
     else
-        return {
+        self:throw(`Unknown character '{ character }' found.`)
+
+        local token = {
             kind = "unknown";
             span = vector.create(startPosition, startPosition);
         }
+
+        table.insert(self.tokens, token)
+
+        return token
     end
+end
+
+function LexerImpl:tostring(
+    lexme: Lexme
+): string
+    return ([[
+Lexer {
+    kind = "%s";
+    span = [%s, %s];
+    content = [%s];
+    malformed = %s;
+    ref = [%s];
+}
+]]):format(
+        lexme.kind,
+        tostring(lexme.span.x),
+        tostring(lexme.span.y),
+        buffer.readstring(
+            self.source,
+            lexme.span.x,
+            lexme.span.y - lexme.span.x + 1
+        ),
+        lexme.malformed and "true" or "false",
+        tostring(lexme)
+    )
 end
 
 return LexerImpl
