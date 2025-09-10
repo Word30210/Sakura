@@ -1,29 +1,51 @@
 local LexerImpl = require("../src/storage/modules/url_parser_module/ast/lexer")
 
-local myLexer = LexerImpl.new("sakura@${u41}use${114}::1234567890::menu?tab=profile&from=main")
+local myLexer = LexerImpl.new("sakura@u${114::1234567890::menu?tab=profile&from=main")
+
+local lastSpan: vector? = nil
+local malformedTokens: number = 0
 
 while not myLexer:eof() do
     local token = myLexer:readKind()
 
-    print(myLexer:tostring(token))
+    if lastSpan and lastSpan.x == token.span.x and lastSpan.y == token.span.y then
+        warn("Something went wrong, stuck at the same position: " .. tostring(token.span))
+        warn("Stucked token:", myLexer:tostring(token))
 
-    if token.metadata then
-        for key, value in token.metadata do
-            print("  ", key, "=", tostring(value))
-        end
+        break
+    else
+        lastSpan = token.span
     end
 
-    local t = os.clock()
-    repeat until os.clock() - t > 0.1
+    malformedTokens += token.malformed and 1 or 0
+
+    print(`{ token.malformed and "\u{1b}[31m" or "\u{1b}[32m" }{ myLexer:tostring(token) }\u{1b}[0m`)
 end
+
+print("----------------")
 
 print("Issues found:")
 
 for _, issue in myLexer.issues do
-    print(issue.why, tostring(issue.span))
+    print(`\u{1b}[31m{ issue.why }\u{1b}[0m | \u{1b}[35m{ issue.span.x }, { issue.span.y }\u{1b}[0m`)
+end
+
+print("----------------")
+
+local function isSuccessful()
+    if lastSpan and lastSpan.y ~= myLexer.length - 1 then
+        return false
+    end
+
+    if malformedTokens > 0 then
+        return false
+    end
+
+    return true
 end
 
 print("Source length:", myLexer.length)
 print("Expected last position:", myLexer.length - 1)
 print("Tokens found:", #myLexer.tokens)
-print("All done.")
+print("Malformed tokens found:", malformedTokens)
+print(`All done. { isSuccessful() and "\u{1b}[32mSuccess!" or "\u{1b}[31mFailed." }\u{1b}[0m`)
