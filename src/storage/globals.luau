@@ -8,6 +8,8 @@ local root = script.Parent
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
 
+local oklch = require(Modules["oklch-rblx"])
+
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
 local peek = Fusion.peek
@@ -135,6 +137,25 @@ function globals.functions.addNumberToColor3BasedRGB(
 	local b = math.floor(color3.B * 255)
 	
 	return Color3.fromRGB(r + number, g + number, b + number)
+end
+
+function globals.functions.createColor3FromOklch(
+	lightness: number,
+	chroma: number,
+	hue: number
+): Color3
+	return oklch.toRGB(lightness, chroma, hue)
+end
+
+function globals.functions.addOklchToColor3(
+	color3: Color3,
+	lightnessAdd: number,
+	chromaAdd: number,
+	hueAdd: number
+): Color3
+	local l, c, h = oklch.fromRGB(color3)
+	
+	return oklch.toRGB(l + lightnessAdd, c + chromaAdd, h + hueAdd)
 end
 
 function globals.functions.toOrdinal(
