@@ -29,6 +29,9 @@ export type LexerImpl = {
     bump: (
         self: Lexer
     ) -> ();
+    unbump:(
+        self: Lexer
+    ) -> ();
     peek: (
         self: Lexer
     ) -> number;
@@ -60,6 +63,10 @@ export type LexerImpl = {
         self: Lexer
     ) -> Lexme;
 
+    scan: (
+        self: Lexer
+    ) -> ({ Lexme }?, { Issue }?);
+
     tostring: (
         self: Lexer,
         lexme: Lexme
@@ -74,7 +81,7 @@ export type Lexer = typeof(setmetatable({} :: {
     tokens: { Lexme };
     issues: { Issue };
 
-    isLexing: boolean;
+    isScanning: boolean;
 }, {} :: LexerImpl))
 
 export type Lexme = {
@@ -175,7 +182,7 @@ function LexerImpl.new(
     self.tokens = {}
     self.issues = {}
 
-    self.isLexing = false
+    self.isScanning = false
 
     return setmetatable(self, LexerImpl)
 end
@@ -199,6 +206,14 @@ function LexerImpl:bump()
     end
 
     self.position += 1
+end
+
+function LexerImpl:unbump()
+    if self.position <= 0 then
+        return
+    end
+
+    self.position -= 1
 end
 
 function LexerImpl:peek(): number
@@ -245,28 +260,70 @@ end
 function LexerImpl:asciiEscapeSequence(): boolean
     local character = self:peek()
     local braceClosed = false
+    local malformed = false
+    local malformedEscapeSequence = false
+    local malformedEscapeSequenceStart = 0
 
     while
-        digit(character)
-        or character == char "}"
+        (
+            name(character)
+            or character == char "}"
+        )
+        and not self:eof()
     do
         if character == char "}" then
             braceClosed = true
 
+            if malformedEscapeSequence then
+                self:throw(
+                    "Malformed ASCII escape sequence.",
+                    vector.create(malformedEscapeSequenceStart, self.position - 1)
+                )
+
+                malformedEscapeSequence = false
+                malformedEscapeSequenceStart = 0
+            end
+
             break
+        end
+
+        if not digit(character) and not malformedEscapeSequence then
+            malformed = true
+            malformedEscapeSequence = true
+            malformedEscapeSequenceStart = self.position
+        elseif digit(character) and malformedEscapeSequence then
+            self:throw(
+                "Malformed ASCII escape sequence.",
+                vector.create(malformedEscapeSequenceStart, self.position - 1)
+            )
+
+            malformedEscapeSequence = false
+            malformedEscapeSequenceStart = 0
         end
 
         self:bump()
         character = self:peek()
     end
 
+    if malformedEscapeSequence then
+        self:throw(
+            "Malformed ASCII escape sequence.",
+            vector.create(malformedEscapeSequenceStart, self.position - 1)
+        )
+
+        malformedEscapeSequence = false
+        malformedEscapeSequenceStart = 0
+    end
+
     if not braceClosed then
         self:throw("Unclosed ASCII escape sequence, expected '}'")
+
+        self:unbump()
 
         return false
     end
 
-    return true
+    return not malformed
 end
 
 function LexerImpl:unicodeEscapeSequence(): boolean
@@ -278,18 +335,77 @@ function LexerImpl:unicodeEscapeSequence(): boolean
 
     local character = self:peek()
 
-    while true do
-        if character == char "}" then
-            return true
-        elseif not hex(character) then
-            self:throw(`Unexpected character '{ string.char(character) }' in Unicode escape sequence`)
+    if character == char "}" then
+        self:throw("Malformed Unicode escape sequence.")
 
-            return false
+        return false
+    end
+
+    local braceClosed = false
+    local malformed = false
+    local malformedEscapeSequence = false
+    local malformedEscapeSequenceStart = 0
+
+    while
+        (
+            name(character)
+            or character == char "}"
+        )
+        and not self:eof()
+    do
+        if character == char "}" then
+            braceClosed = true
+
+            if malformedEscapeSequence then
+                self:throw(
+                    "Malformed Unicode escape sequence.",
+                    vector.create(malformedEscapeSequenceStart, self.position - 1)
+                )
+
+                malformedEscapeSequence = false
+                malformedEscapeSequenceStart = 0
+            end
+
+            break
+        end
+
+        if not hex(character) and not malformedEscapeSequence then
+            malformed = true
+            malformedEscapeSequence = true
+            malformedEscapeSequenceStart = self.position
+        elseif hex(character) and malformedEscapeSequence then
+            self:throw(
+                "Malformed Unicode escape sequence.",
+                vector.create(malformedEscapeSequenceStart, self.position - 1)
+            )
+
+            malformedEscapeSequence = false
+            malformedEscapeSequenceStart = 0
         end
 
         self:bump()
         character = self:peek()
     end
+
+    if malformedEscapeSequence then
+        self:throw(
+            "Malformed Unicode escape sequence.",
+            vector.create(malformedEscapeSequenceStart, self.position - 1)
+        )
+
+        malformedEscapeSequence = false
+        malformedEscapeSequenceStart = 0
+    end
+
+    if not braceClosed then
+        self:throw("Unclosed Unicode escape sequence, expected '}'")
+
+        self:unbump()
+
+        return false
+    end
+
+    return not malformed
 end
 
 function LexerImpl:escapeDollar(): boolean
@@ -304,6 +420,8 @@ function LexerImpl:escapeDollar(): boolean
     if character ~= char "{" then
         self:throw(`Unexpected character '{ string.char(character) }' after '$', expected '\{'`)
 
+        self:unbump()
+
         return false
     end
 
@@ -317,7 +435,10 @@ function LexerImpl:escapeDollar(): boolean
 
     character = self:peek()
 
-    if digit(character) then
+    if character == char "}" then
+        self:throw(`Dollar escape requires an escape sequence, got empty.`)
+        return false
+    elseif digit(character) then
         return self:asciiEscapeSequence()
     elseif character == char "u" then
         self:bump()
@@ -353,8 +474,6 @@ function LexerImpl:readName(): Lexme
             self:bump()
 
             if not self:escapeDollar() then
-                warn("Malformed escape sequence in name at", self.position, string.char(self:peek()))
-
                 malformed = true
             end
         end
@@ -493,6 +612,24 @@ function LexerImpl:readKind(): Lexme
 
         return token
     end
+end
+
+function LexerImpl:scan(): ({ Lexme }?, { Issue }?)
+    if self.isScanning then
+        warn(`Lexer '{ tostring(self) }' is already scanning. no tokens or issues are returned`)
+
+        return
+    end
+
+    self.isScanning = true
+
+    while not self:eof() do
+        self:readKind()
+    end
+
+    self.isScanning = false
+
+    return self.tokens, self.issues
 end
 
 function LexerImpl:tostring(

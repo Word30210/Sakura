@@ -1,6 +1,6 @@
 local LexerImpl = require("../src/storage/modules/url_parser_module/ast/lexer")
 
-local myLexer = LexerImpl.new("sakura@u${114::1234567890::menu?tab=profile&from=main")
+local myLexer = LexerImpl.new("sakura@ABCD::1234567890::menu?tab=profile&from=main${u1ab1}")
 
 local lastSpan: vector? = nil
 local malformedTokens: number = 0
@@ -33,6 +33,10 @@ end
 print("----------------")
 
 local function isSuccessful()
+    if next(myLexer.issues) then
+        return false
+    end
+
     if lastSpan and lastSpan.y ~= myLexer.length - 1 then
         return false
     end
@@ -45,7 +49,8 @@ local function isSuccessful()
 end
 
 print("Source length:", myLexer.length)
-print("Expected last position:", myLexer.length - 1)
+print("Expected last position of the content:", myLexer.length - 1)
+print("Expected position of EOF:", myLexer.length)
 print("Tokens found:", #myLexer.tokens)
 print("Malformed tokens found:", malformedTokens)
 print(`All done. { isSuccessful() and "\u{1b}[32mSuccess!" or "\u{1b}[31mFailed." }\u{1b}[0m`)
