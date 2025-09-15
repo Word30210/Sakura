@@ -22,7 +22,7 @@ export type ParserImpl = {
     __index: ParserImpl;
 
     new: (
-        tokens: { LexerImpl.Lexme }
+        lexer: LexerImpl.Lexer
     ) -> Parser;
 
     throw: (
@@ -48,10 +48,11 @@ export type ParserImpl = {
 }
 
 export type Parser = typeof(setmetatable({} :: {
-    tokens: { LexerImpl.Lexme };
+    lexer: LexerImpl.Lexer;
     length: number;
     position: number;
     issues: { Issue };
+    snapshot: number;
 
     isParsing: boolean;
 }, {} :: ParserImpl))
@@ -72,7 +73,7 @@ ParserImpl.__index = ParserImpl
 
 --#[ Main ]#--
 function ParserImpl.new(
-    tokens: { LexerImpl.Lexme }
+    lexer: LexerImpl.Lexer
 ): Parser
     local self = {}
 

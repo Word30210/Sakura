@@ -65,7 +65,19 @@ export type LexerImpl = {
 
     scan: (
         self: Lexer
-    ) -> ({ Lexme }?, { Issue }?);
+    ) -> ({ Lexme }, { Issue });
+    scanIteratively: (
+        self: Lexer
+    ) -> () -> (number?, Lexme?);
+
+    changeSource:(
+        self: Lexer,
+        newSource: string
+    ) -> ();
+    initialize: (
+        self: Lexer,
+        initializeSnapshot: boolean?
+    ) -> ();
 
     tostring: (
         self: Lexer,
@@ -80,6 +92,7 @@ export type Lexer = typeof(setmetatable({} :: {
     line: number;
     tokens: { Lexme };
     issues: { Issue };
+    snapshot: number;
 
     isScanning: boolean;
 }, {} :: LexerImpl))
@@ -181,6 +194,7 @@ function LexerImpl.new(
     self.line = 0
     self.tokens = {}
     self.issues = {}
+    self.snapshot = 0
 
     self.isScanning = false
 
@@ -614,11 +628,9 @@ function LexerImpl:readKind(): Lexme
     end
 end
 
-function LexerImpl:scan(): ({ Lexme }?, { Issue }?)
+function LexerImpl:scan(): ({ Lexme }, { Issue })
     if self.isScanning then
-        warn(`Lexer '{ tostring(self) }' is already scanning. no tokens or issues are returned`)
-
-        return
+        error(`Lexer '{ tostring(self) }' is already scanning. no tokens or issues are returned`)
     end
 
     self.isScanning = true
@@ -632,17 +644,81 @@ function LexerImpl:scan(): ({ Lexme }?, { Issue }?)
     return self.tokens, self.issues
 end
 
+function LexerImpl:scanIteratively(): () -> (number?, Lexme?)
+    if self.isScanning then
+        error(`Lexer '{ tostring(self) }' is already scanning. no tokens or issues are returned`)
+    end
+
+    self.isScanning = true
+
+    local index = 0
+    local eofReached = false
+
+    local function bumpIndex()
+        index += 1
+
+        return index
+    end
+
+    return function()
+        if self:eof() then
+            if eofReached then
+                self.isScanning = false
+
+                return nil, nil
+            else
+                eofReached = true
+            end
+        end
+
+        local token = self:readKind()
+
+        return bumpIndex(), token
+    end
+end
+
+function LexerImpl:changeSource(
+    newSource: string
+)
+    if self.isScanning then
+        error(`Lexer '{ tostring(self) }' is currently scanning. Source cannot be changed`)
+    end
+
+    self:initialize()
+
+    self.source = buffer.fromstring(newSource)
+    self.length = buffer.len(self.source)
+    self.snapshot += 1
+end
+
+function LexerImpl:initialize(
+    initializeSnapshot: boolean?
+)
+    self.position = 0
+    self.line = 0
+    
+    table.clear(self.tokens)
+    table.clear(self.issues)
+    
+    if initializeSnapshot then
+        self.snapshot = 0
+    end
+
+    self.isScanning = false
+end
+
 function LexerImpl:tostring(
     lexme: Lexme,
     displayRef: boolean?
 ): string
     local kind = lexme.kind
     local spanToString = `[{ lexme.span.x }, { lexme.span.y }]`
-    local content = buffer.readstring(
-        self.source,
-        lexme.span.x,
-        lexme.span.y - lexme.span.x + 1
-    )
+    local content = if lexme.span.x >= self.length or lexme.span.y >= self.length then "<eof>"
+        else buffer.readstring(
+            self.source,
+            lexme.span.x,
+            lexme.span.y - lexme.span.x + 1
+        )
     local malformed = lexme.malformed and "MALFORMED" or "WELL-FORMED"
 
     return `lexme \{ { kind },\t{ spanToString },\t'{ content }',\t{ malformed } \}`
