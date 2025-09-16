@@ -79,6 +79,11 @@ export type LexerImpl = {
         initializeSnapshot: boolean?
     ) -> ();
 
+    extract: (
+        self: Lexer,
+        span: vector
+    ) -> string;
+
     tostring: (
         self: Lexer,
         lexme: Lexme
@@ -100,8 +105,8 @@ export type Lexer = typeof(setmetatable({} :: {
 export type Lexme = {
     kind: string;
     span: vector;
+    content: string?;
     malformed: boolean?;
-    metadata: any?;
 }
 
 export type Issue = {
@@ -505,10 +510,14 @@ end
 
 function LexerImpl:readKind(): Lexme
     if self:eof() then
-        return {
+        local token = {
             kind = "eof";
             span = vector.create(self.position, self.position);
         }
+
+        table.insert(self.tokens, token)
+
+        return token
     end
 
     local character = self:peek()
@@ -605,6 +614,8 @@ function LexerImpl:readKind(): Lexme
     elseif name(character) or character == char "^" or character == char "$" then
         local token = self:readName()
 
+        token.content = self:extract(token.span)
+
         table.insert(self.tokens, token)
 
         return token
@@ -638,6 +649,8 @@ function LexerImpl:scan(): ({ Lexme }, { Issue })
     while not self:eof() do
         self:readKind()
     end
+
+    self:readKind() --// to push EOF token
 
     self.isScanning = false
 
@@ -705,6 +718,19 @@ function LexerImpl:initialize(
     end
 
     self.isScanning = false
+end
+
+function LexerImpl:extract(
+    span: vector
+): string
+    if span.x >= self.length and span.y >= self.length then
+        return "<eof>"
+    end
+
+    local x = math.max(span.x or 0)
+    local y = math.min(span.y or self.length - 1)
+
+    return buffer.readstring(self.source, x, y - x + 1)
 end
 
 function LexerImpl:tostring(
