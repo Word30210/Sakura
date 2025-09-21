@@ -1,0 +1,21 @@
+alphabets ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
+       | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+       | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
+       | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
+digits ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+hex ::= <digits> | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F"
+operators ::= "`" | "~" | "!" | "@" | "#" | "$" | "%" | "^" | "&" | "*" | "(" | ")" | "_" | "-" | "+" | "=" | "{" | "[" | "}" | "]" | "|" | "\" | ":" | ";" | "'" | '"' | "<" | "," | ">" | "." | "?" | "/"
+
+dollarEscapeContent ::= "${" <digits> { <digits> } "}" | "{u" <hex> { <hex> } "}"
+escape ::= "^" (<operators> | <alphabets> | <digits>) | <dollarEscapeContent>
+
+name ::= (<alphabets> | "-" | "_") { <name> }
+nameWithEscape ::= (<alphabets> | "-" | "_" | <escape>) { <nameWithEscape> }
+scope ::= <name>
+head_page_name ::= <name>
+segment ::= <nameWithEscape>
+argument ::= "%" <nameWithEscape> ":" <name> "%"
+query ::= <nameWithEscape> "=" <nameWithEscape> { "&" <nameWithEscape> "=" <nameWithEscape> }
+
+url_pattern ::= <scope> "@" <head_page_name> { "::" (<segment> | <argument>) }
+url ::= <scope> "@" <head_page_name> { "::" <segment> } { "?" <query> }
