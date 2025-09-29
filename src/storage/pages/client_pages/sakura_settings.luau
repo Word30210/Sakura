@@ -32,7 +32,7 @@ local globals = require(SakuraStorage.globals)
 --
 
 --#[ Main ]#--
-local pageRoute = PageRuoteConstructor.new("sakura::settings", "세틴;;", "rbxassetid://135586789898242")
+local pageRoute = PageRuoteConstructor.new("sakura@settings", "세틴;;", "rbxassetid://135586789898242")
 
 function pageRoute:constructDom(
 	tab: globals.Tab,

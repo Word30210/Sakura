@@ -478,19 +478,18 @@ return function(
 					)
 						return
 							if use(globals.addingNewTab) then NumberSequence.new {
-								NumberSequenceKeypoint.new(0, 0.5);
-								NumberSequenceKeypoint.new(0.5, 0.125);
+								NumberSequenceKeypoint.new(0, 1);
+								NumberSequenceKeypoint.new(0.666, 0);
 								NumberSequenceKeypoint.new(1, 0);
 							}
 							elseif use(isHeldDown) or use(isHovering) or use(isSelected) then NumberSequence.new {
-								NumberSequenceKeypoint.new(0, 0.5);
-								NumberSequenceKeypoint.new(0.111, 0.125);
-								NumberSequenceKeypoint.new(0.222, 0);
+								NumberSequenceKeypoint.new(0, 1);
+								NumberSequenceKeypoint.new(0.333, 0);
 								NumberSequenceKeypoint.new(1, 0);
 							}
 							else NumberSequence.new {
-								NumberSequenceKeypoint.new(0, 0.5);
-								NumberSequenceKeypoint.new(0.5, 0.125);
+								NumberSequenceKeypoint.new(0, 1);
+								NumberSequenceKeypoint.new(0.666, 0);
 								NumberSequenceKeypoint.new(1, 0);
 							}
 					end)

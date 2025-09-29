@@ -25,6 +25,7 @@ local OnChange = Fusion.OnChange
 
 local ThemedBorderFrame = require(Components.themed_border_frame)
 
+local UrlEditTextBox = require(script.url_edit_textbox)
 local SideButtons = require(script.side_buttons)
 local AddNewTabButton = require(script.add_new_tab_button)
 local Tabs = require(script.tabs)
@@ -37,6 +38,7 @@ local scope = globals.rootScope:innerScope(
 	{
 		ThemedBorderFrame = ThemedBorderFrame;
 
+		UrlEditTextBox = UrlEditTextBox;
 		SideButtons = SideButtons;
 		AddNewTabButton = AddNewTabButton;
 		Tabs = Tabs;
@@ -98,6 +100,8 @@ scope:New "ScreenGui" {
 						PaddingRight = UDim.new(0, 8);
 						PaddingTop = UDim.new(0, 8);
 					};
+
+					scope:UrlEditTextBox {};
 
 					scope:SideButtons {};
 					

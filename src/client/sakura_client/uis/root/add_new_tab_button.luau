@@ -102,6 +102,8 @@ return function(
 		Size = UDim2.new(1, 0, 0, 40);
 		
 		BackgroundTransparency = 1;
+
+		LayoutOrder = 2;
 		
 		[Children] = scope:New "Frame" {
 			[OnEvent "InputBegan"] = function(

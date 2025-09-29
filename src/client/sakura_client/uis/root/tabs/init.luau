@@ -139,7 +139,7 @@ return function(
 	
 	return scope:New "ScrollingFrame" {
 		AnchorPoint = Vector2.new(0.5, 0);
-		Size = UDim2.new(1, 0, 1, -72); --// 100% - 64px - 8pad
+		Size = UDim2.new(1, 0, 1, -112); --// 100% - 64px - 32 - 8pad * 2
 		
 		BackgroundTransparency = 1;
 		
@@ -149,6 +149,8 @@ return function(
 		
 		ScrollBarThickness = 2;
 		ScrollBarImageTransparency = 0.5;
+
+		LayoutOrder = 3;
 		
 		[Children] = {
 			--scope:New "UIListLayout" {

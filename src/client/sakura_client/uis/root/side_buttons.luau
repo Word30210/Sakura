@@ -111,6 +111,8 @@ local function button(
 		
 		BackgroundTransparency = 1;
 
+		LayoutOrder = 1;
+
 		[Children] = scope:New "Frame" {
 			AnchorPoint = Vector2.new(0.5, 0.5);
 			Position = UDim2.fromScale(0.5, 0.5);
@@ -248,7 +250,7 @@ return function(
 				
 				OnMouseButton1Click = function()
 					if not menuTabId then
-						local tab = TabConstructor.new(scope, "sakura::menu")
+						local tab = TabConstructor.new(scope, "sakura@menu")
 
 						menuTabId = tab.id
 
@@ -258,7 +260,7 @@ return function(
 						local foundTab = TabModule.findMountedTabById(menuTabId)
 
 						if not foundTab then
-							local tab = TabConstructor.new(scope, "sakura::menu")
+							local tab = TabConstructor.new(scope, "sakura@menu")
 
 							menuTabId = tab.id
 
@@ -277,7 +279,7 @@ return function(
 				
 				OnMouseButton1Click = function()
 					if not settingsTabId then
-						local tab = TabConstructor.new(scope, "sakura::settings")
+						local tab = TabConstructor.new(scope, "sakura@settings")
 
 						settingsTabId = tab.id
 
@@ -287,7 +289,7 @@ return function(
 						local foundTab = TabModule.findMountedTabById(settingsTabId)
 
 						if not foundTab then
-							local tab = TabConstructor.new(scope, "sakura::settings")
+							local tab = TabConstructor.new(scope, "sakura@settings")
 
 							settingsTabId = tab.id
 
