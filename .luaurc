@@ -2,9 +2,8 @@
     "languageMode": "strict",
     "lint": { "LocalShadow": false, "LocalUnused": false, "FunctionUnused": false, "ImportUnused": false },
     "lintErrors": true,
-    "globals": [
-        "describe",
-        "it",
-        "expect"
-    ]
+    "aliases": {
+        "sakura_modules": "./src/storage/modules",
+        "sakura_components": "./src/storage/components"
+    }
 }
