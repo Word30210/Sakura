@@ -282,6 +282,8 @@ function ParserImpl:parse()
         self:parseQueries()
     end
 
+    self.isParsing = false
+
     return self.parseResult
 end
 
