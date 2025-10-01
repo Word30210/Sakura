@@ -8,7 +8,7 @@ local localPlayer = Player.LocalPlayer :: Player
 local playerGui = localPlayer.PlayerGui
 
 local SakuraStorage = ReplicatedStorage.sakura_storage
-local Components = SakuraStorage.componets
+local Components = SakuraStorage.components
 
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules

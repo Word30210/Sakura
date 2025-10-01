@@ -263,7 +263,7 @@ end
 
 function ParserImpl:parse()
     if self.isParsing then
-        error(`Parser '{ tostring(self) }' is already parsing. no parseResult is returned { debug.traceback() }`)
+        error(`Parser '{ tostring(self) }' is already parsing. no parseResult is returned`)
     end
 
     self.isParsing = true
