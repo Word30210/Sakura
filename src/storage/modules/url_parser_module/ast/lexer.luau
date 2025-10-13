@@ -66,9 +66,6 @@ export type LexerImpl = {
     scan: (
         self: Lexer
     ) -> ({ Lexme }, { Issue });
-    scanIteratively: (
-        self: Lexer
-    ) -> () -> (number?, Lexme?);
 
     changeSource:(
         self: Lexer,
@@ -100,6 +97,7 @@ export type Lexer = typeof(setmetatable({} :: {
     snapshot: number;
 
     isScanning: boolean;
+    hasScanned: boolean;
 }, {} :: LexerImpl))
 
 export type Lexme = {
@@ -202,6 +200,7 @@ function LexerImpl.new(
     self.snapshot = 0
 
     self.isScanning = false
+    self.hasScanned = false
 
     return setmetatable(self, LexerImpl)
 end
@@ -646,6 +645,14 @@ function LexerImpl:scan(): ({ Lexme }, { Issue })
 
     self.isScanning = true
 
+    if self.hasScanned then
+        warn(`Lexer '{ tostring(self) }' has already scanned once. Returning previous tokens and issues. If you want to re-scan, please use :changeSource(newSource) first.`)
+
+        self.isScanning = false
+
+        return self.tokens, self.issues
+    end
+
     while not self:eof() do
         self:readKind()
     end
@@ -653,41 +660,9 @@ function LexerImpl:scan(): ({ Lexme }, { Issue })
     self:readKind() --// to push EOF token
 
     self.isScanning = false
+    self.hasScanned = true
 
     return self.tokens, self.issues
-end
-
-function LexerImpl:scanIteratively(): () -> (number?, Lexme?)
-    if self.isScanning then
-        error(`Lexer '{ tostring(self) }' is already scanning. no tokens or issues are returned`)
-    end
-
-    self.isScanning = true
-
-    local index = 0
-    local eofReached = false
-
-    local function bumpIndex()
-        index += 1
-
-        return index
-    end
-
-    return function()
-        if self:eof() then
-            if eofReached then
-                self.isScanning = false
-
-                return nil, nil
-            else
-                eofReached = true
-            end
-        end
-
-        local token = self:readKind()
-
-        return bumpIndex(), token
-    end
 end
 
 function LexerImpl:changeSource(
@@ -702,22 +677,25 @@ function LexerImpl:changeSource(
     self.source = buffer.fromstring(newSource)
     self.length = buffer.len(self.source)
     self.snapshot += 1
+    
+    self.hasScanned = false
 end
 
 function LexerImpl:initialize(
     initializeSnapshot: boolean?
 )
+    if initializeSnapshot then
+        self.snapshot = 0
+    end
+
     self.position = 0
     self.line = 0
     
     table.clear(self.tokens)
     table.clear(self.issues)
-    
-    if initializeSnapshot then
-        self.snapshot = 0
-    end
 
     self.isScanning = false
+    self.hasScanned = false
 end
 
 function LexerImpl:extract(

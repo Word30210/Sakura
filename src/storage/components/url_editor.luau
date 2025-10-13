@@ -103,12 +103,6 @@ return function(
         )
             local isCorrectSyntax = use(isCorrectSyntax)
 
-            if isCorrectSyntax then
-                print("correct syntax!")
-            else
-                print("incorrect syntax!!!")
-            end
-
             return use(isCorrectSyntax) and Color3.fromHex("3fb950") or Color3.fromHex("da3633")
         end);
         -- TextColor3 = Color3.fromHex("eeeeee");
@@ -133,7 +127,11 @@ return function(
                     why = "url entered was too long!";
                 }
 
+                isCorrectSyntax:set(false)
+
                 return
+            else
+                isCorrectSyntax:set(true)
             end
 
             if waitForScanningAndParsingThread then
@@ -148,6 +146,7 @@ return function(
 
                     props.Lexer:changeSource(newText)
                     props.Lexer:scan()
+                    props.Parser:syncWithLexer()
                     props.Parser:parse()
 
                     coroutine.resume(currentThread)
@@ -158,6 +157,7 @@ return function(
 
             props.Lexer:changeSource(newText)
             props.Lexer:scan()
+            props.Parser:syncWithLexer()
             props.Parser:parse()
 
             warn(props.Parser.isParsing)

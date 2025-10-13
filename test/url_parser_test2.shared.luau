@@ -1,7 +1,7 @@
 local LexerImpl = require("../src/storage/modules/url_parser_module/ast/lexer")
 local ParserImpl = require("../src/storage/modules/url_parser_module/ast/parser")
 
-local myLexer = LexerImpl.new("sakura@ABCD::1234567890::menu?tab=profile&from=main${u1ab1}")
+local myLexer = LexerImpl.new("sakura@users::1234567890::menu?tab=profile&from=main${u1ab1}")
 
 local lastSpan: vector? = nil
 local malformedTokens: number = 0
@@ -20,7 +20,8 @@ end
 
 print("----------------")
 
-local myParser = ParserImpl.new(myLexer.tokens)
+local myParser = ParserImpl.new(myLexer)
+
 local result = myParser:parse()
 
 print(`Scope: { result.scope }`)

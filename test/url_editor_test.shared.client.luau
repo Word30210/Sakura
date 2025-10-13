@@ -43,8 +43,8 @@ local testScope = scoped(
     }
 )
 
-local testLexer = UrlLexer.new("test")
-local testParser = UrlParser.new(testLexer.tokens)
+local testLexer = UrlLexer.new("")
+local testParser = UrlParser.new(testLexer)
 
 --#[ Function ]#--
 --

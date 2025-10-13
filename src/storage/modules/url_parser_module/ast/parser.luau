@@ -22,7 +22,7 @@ export type ParserImpl = {
     __index: ParserImpl;
 
     new: (
-        tokens: { LexerImpl.Lexme }
+        lexer: LexerImpl.Lexer
     ) -> Parser;
 
     throw: (
@@ -61,9 +61,18 @@ export type ParserImpl = {
     parse: (
         self: Parser
     ) -> ParseResult;
+
+    syncWithLexer:(
+        self: Parser
+    ) -> ();
+    initialize: (
+        self: Parser,
+        initializeSnapshot: boolean?
+    ) -> ();
 }
 
 export type Parser = typeof(setmetatable({} :: {
+    lexer: LexerImpl.Lexer;
     tokens: { LexerImpl.Lexme };
     length: number;
     position: number;
@@ -72,6 +81,7 @@ export type Parser = typeof(setmetatable({} :: {
     snapshot: number;
 
     isParsing: boolean;
+    hasParsed: boolean;
 }, {} :: ParserImpl))
 
 export type ParseResult = {
@@ -90,21 +100,23 @@ ParserImpl.__index = ParserImpl
 
 --#[ Main ]#--
 function ParserImpl.new(
-    tokens: { LexerImpl.Lexme }
+    lexer: LexerImpl.Lexer
 ): Parser
     local self = {}
 
-    self.tokens = tokens
-    self.length = #tokens
+    self.lexer = lexer
+    self.tokens = lexer.tokens
+    self.length = #lexer.tokens
     self.position = 1
     self.issues = {}
     self.parseResult = {
         segments = {};
         queries = {};
     }
-    self.snapshot = 0
+    self.snapshot = lexer.snapshot
 
     self.isParsing = false
+    self.hasParsed = false
 
     return setmetatable(self, ParserImpl)
 end
@@ -136,6 +148,20 @@ function ParserImpl:peek(): LexerImpl.Lexme
     end
 
     return self.tokens[self.position]
+end
+
+function ParserImpl:eof(): boolean
+    local token = self:peek()
+
+    if not token then
+        return true
+    end
+
+    if token.kind == "eof" then
+        return true
+    end
+
+    return false
 end
 
 function ParserImpl:parseHead()
@@ -274,14 +300,24 @@ function ParserImpl:parse()
         return self.parseResult
     end
 
-    self:parseHead()
+    if self.hasParsed then
+        warn(`Parser '{ tostring(self) }' has already parsed once. Returning previous parseResult. If you want to re-parse, please use :syncWithLexer() first.`)
 
-    self:bump()
+        self.isParsing = false
 
-    local hasQuery = self:parseSegments()
+        return self.parseResult
+    end
 
-    if hasQuery then
-        self:parseQueries()
+    if not self:eof() then
+        self:parseHead()
+
+        self:bump()
+
+        local hasQuery = self:parseSegments()
+
+        if hasQuery then
+            self:parseQueries()
+        end
     end
 
     self.isParsing = false
@@ -289,18 +325,36 @@ function ParserImpl:parse()
     return self.parseResult
 end
 
-function ParserImpl:eof(): boolean
-    local token = self:peek()
-
-    if not token then
-        return true
+function ParserImpl:syncWithLexer()
+    if self.isParsing then
+        error(`Parser '{ tostring(self) }' is already parsing. cannot sync with lexer now.`)
     end
 
-    if token.kind == "eof" then
-        return true
+    self:initialize()
+
+    self.tokens = self.lexer.tokens --// Actually. this code is useless.
+    self.length = #self.lexer.tokens
+    self.snapshot = self.lexer.snapshot
+    
+    self.hasParsed = false
+end
+
+function ParserImpl:initialize(
+    initializeSnapshot: boolean?
+)
+    if initializeSnapshot then
+        self.snapshot = 0
     end
 
-    return false
+    self.position = 1
+    
+    table.clear(self.issues)
+
+    table.clear(self.parseResult.segments)
+    table.clear(self.parseResult.queries)
+
+    self.isParsing = false
+    self.hasParsed = false
 end
 
 return ParserImpl
