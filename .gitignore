@@ -1,6 +1,12 @@
 # Roblox Studio files
 *.rbxl
 *.rbxlx
+*.rbxm
+*.rbxmx
+
+# darklua build file
+/.builded_src
+/.builded_test
 
 # lock files
 *.lock

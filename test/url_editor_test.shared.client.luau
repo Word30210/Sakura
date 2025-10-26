@@ -13,10 +13,10 @@ local globals = require(SakuraStorage.globals)
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
 
--- local UrlLexer = require("@sakura_modules/url_parser_module/ast/lexer")
--- local UrlParser = require("@sakura_modules/url_parser_module/ast/parser")
-local UrlLexer = require(SakuraStorage.modules.url_parser_module.ast.lexer)
-local UrlParser = require(SakuraStorage.modules.url_parser_module.ast.parser)
+local UrlLexer = require("@sakura_modules/url_parser_module/ast/lexer")
+local UrlParser = require("@sakura_modules/url_parser_module/ast/parser")
+-- local UrlLexer = require(SakuraStorage.modules.url_parser_module.ast.lexer)
+-- local UrlParser = require(SakuraStorage.modules.url_parser_module.ast.parser)
 
 --#[ Constructors ]#--
 --

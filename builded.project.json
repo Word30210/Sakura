@@ -10,23 +10,23 @@
       },
       "sakura_storage": {
         "$className": "Folder",
-        "$path": "./src/storage"
+        "$path": "./.builded_src/storage"
       }
     },
 
     "ServerScriptService": {
       "server": {
-        "$path": "./src/server"
+        "$path": "./.builded_src/server"
       }
     },
 
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "client": {
-          "$path": "./src/client"
+          "$path": "./.builded_src/client"
         },
         "test": {
-          "$path": "./test"
+          "$path": "./.builded_test"
         }
       }
     }

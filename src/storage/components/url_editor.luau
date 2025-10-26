@@ -84,6 +84,8 @@ return function(
         else
             isCorrectSyntax:set(true)
         end
+
+        
     end
 
     return scope:New "TextBox" {

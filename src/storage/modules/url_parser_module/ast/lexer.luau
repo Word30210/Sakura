@@ -8,6 +8,7 @@
 
 --#[ Modules ]#--
 -- local Modules = ReplicatedStorage.modules
+local uid_module = require("@sakura_modules/uid_module")
 
 --#[ Fusion ]#--
 --
