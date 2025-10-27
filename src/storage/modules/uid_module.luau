@@ -1,9 +1,25 @@
+--#[ Types ]#--
+type fixedRng = {
+    NextInteger: (self: fixedRng, min: number, max: number) -> number;
+}
+
 --#[ Services ]#--
 --
 
 --#[ Head Variables ]#--
 local module = {}
-local rng = Random.new(os.time())
+local rng do
+    if _VERSION == "Luau" then
+        rng = (Random.new(os.time()) :: any) :: fixedRng
+    else
+        rng = {
+            NextInteger = function(self, min: number, max: number): number
+                return math.random(min, max)
+            end
+        }
+    end
+end
+
 
 --#[ Variables ]#--
 --
