@@ -1,4 +1,4 @@
-local LexerImpl = require("../src/storage/modules/url_parser_module/ast/lexer")
+local LexerImpl = require("@sakura_modules/url_parser_module/ast/lexer")
 
 local myLexer = LexerImpl.new("1sakura@ABCD::1234567890::menu?tab=profile&from=main${u1ab1}")
 

@@ -50,18 +50,30 @@ local testParser = UrlParser.new(testLexer)
 --
 
 --#[ Main ]#--
+warn("eeeeasdasd")
+
 testScope:New "ScreenGui" {
     Name = script.Name;
     Parent = playerGui;
 
-    [Children] = testScope:UrlEditor {
+    DisplayOrder = 1;
+
+    [Children] = testScope:New "Frame" {
         AnchorPoint = Vector2.new(0.5, 0.5);
         Position = UDim2.fromScale(0.5, 0.5);
-        Size = UDim2.fromOffset(1000, 50);
+        Size = UDim2.fromOffset(250, 14);
 
-        BackgroundColor3 = Color3.fromRGB(26, 21, 21);
+        BackgroundColor3 = peek(globals.theme).primaryBackgroundColor;
 
-        Lexer = testLexer;
-        Parser = testParser;
+        [Children] = testScope:UrlEditor {
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            Position = UDim2.fromScale(0.5, 0.5);
+            Size = UDim2.fromOffset(1000, 50);
+
+            BackgroundColor3 = Color3.fromRGB(26, 21, 21);
+
+            Lexer = testLexer;
+            Parser = testParser;
+        }
     }
 }

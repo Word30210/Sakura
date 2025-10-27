@@ -105,6 +105,25 @@ globals.theme = rootScope:Value {
 	primaryContentColor = Color3.fromRGB(194, 194, 194);
 	secondaryContentColor = Color3.fromRGB(127, 127, 127);
 	tertiaryContentColor = Color3.fromRGB(66, 61, 61);
+
+	url_editor = {
+		scope = Color3.fromRGB(203, 166, 247);
+		headSegment = Color3.fromRGB(205, 214, 244);
+		name = Color3.fromRGB(143, 180, 255);
+		argument = Color3.fromRGB(250, 179, 135);
+		queryKey = Color3.fromRGB(166, 227, 161);
+		queryValue = Color3.fromRGB(166, 227, 161);
+
+		--// operators
+		at = Color3.fromRGB(188, 190, 200);
+		double_colon = Color3.fromRGB(188, 190, 200);
+		question_mark = Color3.fromRGB(188, 190, 200);
+		equal = Color3.fromRGB(188, 190, 200);
+		ampersand = Color3.fromRGB(188, 190, 200);
+
+		--// malformed
+		unknown = Color3.fromRGB(243, 139, 168);
+	}
 }
 
 globals.functions = {}

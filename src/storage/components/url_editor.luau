@@ -9,10 +9,8 @@ local SakuraStorage = ReplicatedStorage.sakura_storage
 --#[ Modules ]#--
 local Modules = ReplicatedStorage.modules
 
--- local UrlLexer = require("@sakura_modules/url_parser_module/ast/lexer")
--- local UrlParser = require("@sakura_modules/url_parser_module/ast/parser")
-local UrlLexer = require(SakuraStorage.modules.url_parser_module.ast.lexer)
-local UrlParser = require(SakuraStorage.modules.url_parser_module.ast.parser)
+local UrlLexer = require("@sakura_modules/url_parser_module/ast/lexer")
+local UrlParser = require("@sakura_modules/url_parser_module/ast/parser")
 
 --#[ Fusion ]#--
 local Fusion = require(Modules.fusion)
@@ -33,11 +31,12 @@ export type props = {
 
     AnchorPoint: UsedAs<Vector2>?;
     Position: UsedAs<UDim2>?;
-    Size: UsedAs<UDim2>?;
     Rotation: UsedAs<number>?;
 
     BackgroundColor3: UsedAs<Color3>?;
     BackgroundTransparency: UsedAs<number>?;
+
+    TextSize: UsedAs<number>?;
 
     LayoutOrder: UsedAs<number>?;
 	ZIndex: UsedAs<number>?;
@@ -48,11 +47,68 @@ export type props = {
     Parser: UrlParser.Parser;
 }
 
+type coloredTextLabelProps = {
+    Name: UsedAs<string>?;
+    Parent: UsedAs<Instance>?;
+
+    Text: UsedAs<string>;
+    Bold: UsedAs<boolean>?;
+    TextSize: UsedAs<number>?;
+
+    LayoutOrder: UsedAs<number>;
+
+    Kind: UsedAs<string>;
+}
+
 --#[ Variables ]#--
 local globals = require(SakuraStorage.globals)
 
 --#[ Function ]#--
---
+local function getcursorPosition(
+    scollingFramsSizeX: number,
+    contentSizeX: number
+): number
+    return math.clamp(contentSizeX - scollingFramsSizeX, 0, math.huge)
+end
+
+local function createHighlightTextLabel(
+    scope: Scope,
+    props: coloredTextLabelProps
+)
+    return scope:New "TextLabel" {
+        Name = props.Name;
+        Parent = props.Parent;
+
+        Size = scope:Computed(function(
+            use: Fusion.Use
+        )
+            local textSize = use(props.TextSize) or 14
+
+            return UDim2.fromOffset(0, textSize)
+        end);
+
+        BackgroundTransparency = 1;
+
+        AutomaticSize = Enum.AutomaticSize.X;
+
+        Text = props.Text;
+        TextSize = props.TextSize or 14;
+        TextColor3 = scope:Computed(function(
+            use: Fusion.Use
+        )
+            local color = use(globals.theme).url_editor[props.Kind];
+
+            return color or use(globals.theme).secondaryContentColor
+        end);
+        FontFace = Font.new(
+            "rbxassetid://16658246179",
+            peek(props.Bold) and Enum.FontWeight.Bold or Enum.FontWeight.Regular,
+            Enum.FontStyle.Normal
+        );
+
+        LayoutOrder = props.LayoutOrder;
+    } :: TextLabel
+end
 
 --#[ Main ]#--
 return function(
@@ -61,62 +117,86 @@ return function(
 )
     props.Parser.tokens = props.Lexer.tokens
 
-    local highlightLabels: { TextLabel } = {}
+    local highlightLabels: Fusion.Value<{ Instance }> = scope:Value {}
+    local textboxAbsoluteSizeX = scope:Value(0)
+    local contentSizeX = scope:Value(0)
 
     local waitForScanningAndParsingThread: thread?
 
-    local isCorrectSyntax = scope:Value(false)
+    local function clearHighlightLabels()
+        local peekedHighlightLabels = peek(highlightLabels)
+
+        for index, label in peekedHighlightLabels do
+            label:Destroy()
+
+            peekedHighlightLabels[index] = nil
+        end
+
+        highlightLabels:set(peekedHighlightLabels)
+    end
 
     local function updateHighlightLabels()
         local tokens = props.Lexer.tokens
         local parseResult = props.Parser.parseResult
 
-        warn("source:", buffer.tostring(props.Lexer.source))
-        warn("snapshot:", props.Lexer.snapshot)
-        warn("tokens:", props.Lexer.tokens)
-        warn("parseResult:", parseResult)
+        clearHighlightLabels()
 
-        warn("lexical issues:", props.Lexer.issues)
-        warn("syntax issues:", props.Parser.issues)
+        local peekedHighlightLabels = peek(highlightLabels)
 
-        if next(props.Lexer.issues) or next(props.Parser.issues) then
-            isCorrectSyntax:set(false)
-        else
-            isCorrectSyntax:set(true)
+        contentSizeX:set(0)
+
+        for index, token in tokens do
+            if token.kind == "eof" then
+                break
+            end
+
+            local highlightLabel = createHighlightTextLabel(
+                scope,
+                {
+                    Name = token.kind;
+
+                    Text = token.content or props.Lexer:extract(token.span);
+                    Bold = token.kind == "scope" or token.kind == "head_segment";
+                    TextSize = props.TextSize;
+
+                    LayoutOrder = index;
+
+                    Kind = token.kind
+                }
+            )
+
+            
+            contentSizeX:set(peek(contentSizeX) + highlightLabel.AbsoluteSize.X)
+
+            table.insert(peekedHighlightLabels, highlightLabel)
+
+            warn(highlightLabel.AbsoluteSize.X)
         end
 
-        
+        warn("Content Size X:", peek(contentSizeX))
+        highlightLabels:set(peekedHighlightLabels)
     end
 
-    return scope:New "TextBox" {
-        Name = props.Name;
-        Parent = props.Parent;
+    local textbox = scope:New "TextBox" {
+        Size = UDim2.fromScale(1, 1);
 
-        AnchorPoint = props.AnchorPoint;
-        Position = props.Position;
-        Size = props.Size;
-        Rotation = props.Rotation;
-
-        BackgroundColor3 = props.BackgroundColor3;
-        BackgroundTransparency = props.BackgroundTransparency;
+        BackgroundTransparency = 1;
 
         TextColor3 = scope:Computed(function(
             use: Fusion.Use
         )
-            local isCorrectSyntax = use(isCorrectSyntax)
+            local color = use(globals.theme).secondaryContentColor
 
-            return use(isCorrectSyntax) and Color3.fromHex("3fb950") or Color3.fromHex("da3633")
+            return color
         end);
-        -- TextColor3 = Color3.fromHex("eeeeee");
-        FontFace = Font.new("rbxasset://fonts/families/Ubuntu.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+
+        FontFace = Font.new("rbxassetid://16658246179", Enum.FontWeight.Light, Enum.FontStyle.Normal);
+
+        TextXAlignment = Enum.TextXAlignment.Left;
+        TextYAlignment = Enum.TextYAlignment.Center;
 
         ClearTextOnFocus = false;
         MultiLine = false;
-
-        LayoutOrder = props.LayoutOrder;
-        ZIndex = props.ZIndex;
-        Visible = props.Visible;
-        Active = props.Active;
 
         [OnChange "Text"] = function(
             newText: string
@@ -129,11 +209,7 @@ return function(
                     why = "url entered was too long!";
                 }
 
-                isCorrectSyntax:set(false)
-
                 return
-            else
-                isCorrectSyntax:set(true)
             end
 
             if waitForScanningAndParsingThread then
@@ -162,9 +238,69 @@ return function(
             props.Parser:syncWithLexer()
             props.Parser:parse()
 
-            warn(props.Parser.isParsing)
-
             updateHighlightLabels()
         end;
+
+        [Children] = scope:New "ScrollingFrame" {
+            Size = UDim2.fromScale(1, 1);
+
+            BackgroundTransparency = 1;
+
+            CanvasPosition = scope:Computed(function(
+                use: Fusion.Use
+            )
+                local contentSizeX = use(contentSizeX)
+                local textboxAbsoluteSizeX = use(textboxAbsoluteSizeX)
+
+                return Vector2.new(
+                    getcursorPosition(textboxAbsoluteSizeX, contentSizeX),
+                    0
+                )
+            end);
+            CanvasSize = UDim2.new();
+            ScrollBarThickness = 0;
+
+            AutomaticCanvasSize = Enum.AutomaticSize.X;
+                
+            [Children] = {
+                scope:New "UIListLayout" {
+                    FillDirection = Enum.FillDirection.Horizontal;
+                    SortOrder = Enum.SortOrder.LayoutOrder;
+                };
+
+                highlightLabels :: any;
+            }
+        }
+    } :: TextBox
+
+    textboxAbsoluteSizeX:set(textbox.AbsoluteSize.X)
+
+    local ui = scope:New "Frame" {
+        Name = props.Name;
+        Parent = props.Parent;
+
+        AnchorPoint = props.AnchorPoint;
+        Position = props.Position;
+        Size = scope:Computed(function(
+            use: Fusion.Use
+        )
+            local textSize = use(props.TextSize) or 14
+
+            return UDim2.new(1, 0, 0, textSize)
+        end);
+        Rotation = props.Rotation;
+
+        BackgroundColor3 = scope:Computed(function(
+            use: Fusion.Use
+        )
+            return props.BackgroundColor3 or use(globals.theme).secondaryBackgroundColor
+        end);
+        BackgroundTransparency = props.BackgroundTransparency;
+
+        ClipsDescendants = true;
+
+        [Children] = textbox;
     }
+
+    return ui
 end

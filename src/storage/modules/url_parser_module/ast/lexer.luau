@@ -102,6 +102,7 @@ export type Lexer = typeof(setmetatable({} :: {
 }, {} :: LexerImpl))
 
 export type Lexme = {
+    uid: string;
     kind: string;
     span: vector;
     content: string?;
@@ -502,6 +503,7 @@ function LexerImpl:readName(): Lexme
     end
 
     return {
+        uid = `lexme_{ uid_module.generateHashes(16) } `;
         kind = "name";
         span = vector.create(startPosition, self.position - 1);
         malformed = malformed;
@@ -511,6 +513,7 @@ end
 function LexerImpl:readKind(): Lexme
     if self:eof() then
         local token = {
+            uid = `lexme_{ uid_module.generateHashes(16) } `;
             kind = "eof";
             span = vector.create(self.position, self.position);
         }
@@ -538,6 +541,7 @@ function LexerImpl:readKind(): Lexme
 
     if character == char "@" then
         local token = {
+            uid = `lexme_{ uid_module.generateHashes(16) } `;
             kind = "at";
             span = vector.create(self.position, self.position);
         }
@@ -553,6 +557,7 @@ function LexerImpl:readKind(): Lexme
 
         if character == char ":" then
             local token = {
+                uid = `lexme_{ uid_module.generateHashes(16) } `;
                 kind = "double_colon";
                 span = vector.create(self.position - 1, self.position);
             }
@@ -564,6 +569,7 @@ function LexerImpl:readKind(): Lexme
             return token
         else
             local token = {
+                uid = `lexme_{ uid_module.generateHashes(16) } `;
                 kind = "unknown";
                 span = vector.create(self.position - 1, self.position - 1);
                 malformed = true;
@@ -580,6 +586,7 @@ function LexerImpl:readKind(): Lexme
         end
     elseif character == char "?" then
         local token = {
+            uid = `lexme_{ uid_module.generateHashes(16) } `;
             kind = "question_mark";
             span = vector.create(self.position, self.position);
         }
@@ -591,6 +598,7 @@ function LexerImpl:readKind(): Lexme
         return token
     elseif character == char "=" then
         local token = {
+            uid = `lexme_{ uid_module.generateHashes(16) } `;
             kind = "equal";
             span = vector.create(self.position, self.position);
         }
@@ -602,6 +610,7 @@ function LexerImpl:readKind(): Lexme
         return token
     elseif character == char "&" then
         local token = {
+            uid = `lexme_{ uid_module.generateHashes(16) } `;
             kind = "ampersand";
             span = vector.create(self.position, self.position);
         }
@@ -621,6 +630,7 @@ function LexerImpl:readKind(): Lexme
         return token
     else
         local token = {
+            uid = `lexme_{ uid_module.generateHashes(16) } `;
             kind = "unknown";
             span = vector.create(self.position, self.position);
             malformed = true;
@@ -703,7 +713,7 @@ function LexerImpl:extract(
     span: vector
 ): string
     if span.x >= self.length and span.y >= self.length then
-        return "<eof>"
+        return "\32"
     end
 
     local x = math.max(span.x or 0)
